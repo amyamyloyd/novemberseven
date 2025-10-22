@@ -76,7 +76,9 @@ Use the following rulesets to handle specific logic, patterns, and conventions:
 | LangChain Tools & Agents   | `langchain.mdc` |
 | SQLite Schema & Queries    | `sqlite.mdc`    |
 | PRD Implementation Planning| `imp.mdc`       |
-
+| Python Libararies          | `python_libraries.mdc` |
+| Authentication Integration   | `authentication.mdc`    |
+| Azure Deployment           | `azure.mdc`       |
 ---
 
 ## ⚖️ Global Rules (Apply Always)

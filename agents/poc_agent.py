@@ -110,6 +110,7 @@ class POCAgent:
         # Agent state
         self.conversation_stage = "greeting"
         self.requirements = {}
+        self.message_count = 0
         
         # Initialize conversation memory
         self.memory = ConversationBufferMemory(return_messages=True)
@@ -284,6 +285,18 @@ Name:"""
         """
         system_prompt = self.get_system_prompt()
         
+        # Add conversation flow guidance
+        flow_guidance = """
+
+CONVERSATION FLOW:
+1. Initial: Ask what they want to build (goal, users, workflow)
+2. Frontend: Ask about UI/pages/colors/layout (ask 1-2 questions max)
+3. Backend: Ask about data/operations/integrations (ask 1-2 questions max)
+4. Review: Present summary of requirements and ask for approval
+5. Generate: When approved, tell user to type "generate prd" or "generate a prd"
+
+Keep questions brief. Move quickly through stages. Don't repeat questions about preferences."""
+        
         # Create conversation chain with system prompt
         self.conversation_chain = ConversationChain(
             llm=self.llm,
@@ -295,7 +308,7 @@ Name:"""
         if not self.memory.chat_memory.messages:
             # Add system context as first interaction
             self.memory.chat_memory.add_ai_message(
-                f"[SYSTEM CONTEXT: {system_prompt}] Hello! I'm here to help you build a POC. What would you like to create?"
+                f"[SYSTEM CONTEXT: {system_prompt}{flow_guidance}] Hello! I'm here to help you build a PRD. What would you like to create?"
             )
     
     def process_request(
@@ -359,7 +372,20 @@ Name:"""
         
         # Process through conversation chain
         try:
-            response = self.conversation_chain.predict(input=full_prompt)
+            # Override with stage-specific prompts for better flow
+            if self.conversation_stage == "requirements_review":
+                # Present requirements summary
+                response = self._present_requirements_summary()
+            else:
+                # Add stage-specific guidance to prompt
+                stage_guidance = self._get_stage_guidance()
+                enhanced_prompt = f"{stage_guidance}\n\n{full_prompt}" if stage_guidance else full_prompt
+                
+                # Normal conversation flow
+                response = self.conversation_chain.predict(input=enhanced_prompt)
+            
+            # Update requirements from conversation BEFORE stage update
+            self.update_requirements_from_conversation()
             
             # Update agent state based on conversation
             self._update_conversation_stage(prompt, response)
@@ -395,6 +421,61 @@ Name:"""
                 "next_action": "retry"
             }
     
+    def _present_requirements_summary(self) -> str:
+        """
+        Present requirements summary to user for approval.
+        
+        Returns:
+            str: Formatted requirements summary
+        """
+        summary = "Great! Let me summarize what we've discussed:\n\n"
+        
+        if self.requirements.get("goal"):
+            summary += f"**Goal**: {self.requirements['goal']}\n\n"
+        
+        if self.requirements.get("users"):
+            summary += f"**Users**: {self.requirements['users']}\n\n"
+        
+        if self.requirements.get("workflow"):
+            summary += f"**Workflow**: {self.requirements['workflow']}\n\n"
+        
+        if self.requirements.get("frontend"):
+            summary += f"**Frontend**: {json.dumps(self.requirements['frontend'], indent=2)}\n\n"
+        
+        if self.requirements.get("backend"):
+            summary += f"**Backend**: {json.dumps(self.requirements['backend'], indent=2)}\n\n"
+        
+        if self.requirements.get("database"):
+            summary += f"**Database**: {json.dumps(self.requirements['database'], indent=2)}\n\n"
+        
+        summary += "\nDoes this look correct? If yes, I'll generate a complete PRD document with implementation instructions for Cursor AI."
+        
+        return summary
+    
+    def _get_stage_guidance(self) -> str:
+        """
+        Get stage-specific guidance to inject into prompts.
+        
+        Returns:
+            str: Guidance text for current stage
+        """
+        if self.conversation_stage == "greeting":
+            return "[STAGE: greeting - Ask user what they want to build]"
+        
+        elif self.conversation_stage == "initial_requirements":
+            return "[STAGE: initial - You've heard their idea. Ask ONE clear question about who will use it or the main goal. Don't repeat yourself.]"
+        
+        elif self.conversation_stage == "frontend_requirements":
+            return "[STAGE: frontend - Ask ONE question about UI preferences (colors, layout, pages). If they say 'no specific preferences' or give general answer, acknowledge it and say 'Great! Now let me ask about the backend...']"
+        
+        elif self.conversation_stage == "backend_requirements":
+            return "[STAGE: backend - Ask ONE question about what data needs to be stored or what the app needs to do. If they say 'just simple' or 'no specifics', acknowledge and say 'Perfect! Let me summarize what we have so far...'. DO NOT keep asking more questions if they've given you enough.]"
+        
+        elif self.conversation_stage == "ready_to_generate":
+            return "[STAGE: ready - Tell user to type 'generate prd' to create the PRD document.]"
+        
+        return ""
+    
     def _restore_state(self, conversation_history: Dict[str, Any]):
         """
         Restore agent state from previous conversation.
@@ -406,6 +487,7 @@ Name:"""
         # Restore conversation stage and requirements
         self.conversation_stage = conversation_history.get("stage", "greeting")
         self.requirements = conversation_history.get("requirements", {})
+        self.message_count = conversation_history.get("message_count", 0)
         
         # Restore memory if available
         if "memory" in conversation_history:
@@ -425,32 +507,57 @@ Name:"""
             user_input (str): User's message
             agent_response (str): Agent's response
         """
-        # Simple stage progression logic
-        # TODO: Phase 4 - More sophisticated stage detection
-        stages = self.prompts.get("conversation_flow", {}).get("stages", [])
+        user_lower = user_input.lower()
+        self.message_count += 1
         
-        if self.conversation_stage == "greeting" and len(user_input) > 20:
+        # Check for approval/confirmation keywords
+        approval_keywords = ['yes', 'correct', 'looks good', 'approve', 'sounds good', 'that works', 'perfect', 'sounds like a plan']
+        is_approval = any(keyword in user_lower for keyword in approval_keywords)
+        
+        # Progress through stages
+        if self.conversation_stage == "greeting" and len(user_input) > 15:
             self.conversation_stage = "initial_requirements"
         
-        # More stage logic will be added in Phase 4 (Requirements Gathering)
+        elif self.conversation_stage == "initial_requirements":
+            # Move to frontend after 1-2 exchanges
+            if self.message_count >= 2 or is_approval:
+                self.conversation_stage = "frontend_requirements"
+        
+        elif self.conversation_stage == "frontend_requirements":
+            # Move to backend after discussing colors/ui
+            frontend_keywords = ['color', 'page', 'ui', 'design', 'interface', 'large text', 'button', 'fun', 'easy']
+            has_frontend = any(keyword in user_lower for keyword in frontend_keywords)
+            if has_frontend or is_approval:
+                self.conversation_stage = "backend_requirements"
+        
+        elif self.conversation_stage == "backend_requirements":
+            # Move to review after discussing backend or user asks what's next
+            next_triggers = ["next", "what's next", "whats next", "what next", "done", "that's all", "thats all", "build", "prd"]
+            if is_approval or any(trigger in user_lower for trigger in next_triggers):
+                self.conversation_stage = "requirements_review"
+        
+        elif self.conversation_stage == "requirements_review":
+            # User approved requirements, ready to generate
+            if is_approval:
+                self.conversation_stage = "ready_to_generate"
     
     def _determine_next_action(self) -> str:
         """
         Determine what the next action should be based on current state.
         
         Returns:
-            str: Next action (continue_chat, ready_to_generate, need_clarification)
+            str: Next action (continue_chat, ready_to_generate, present_requirements, need_clarification)
         """
-        # Check if requirements are complete
-        required_sections = ["goal", "users", "frontend", "backend", "database"]
-        complete_sections = [s for s in required_sections if s in self.requirements]
+        # If in requirements_review stage, present requirements
+        if self.conversation_stage == "requirements_review":
+            return "present_requirements"
         
-        if len(complete_sections) >= len(required_sections):
+        # If stage is ready_to_generate
+        if self.conversation_stage == "ready_to_generate":
             return "ready_to_generate"
-        elif self.conversation_stage == "greeting":
-            return "continue_chat"
-        else:
-            return "continue_chat"
+        
+        # Otherwise continue gathering
+        return "continue_chat"
     
     def save_conversation(self) -> Dict[str, Any]:
         """
@@ -477,6 +584,7 @@ Name:"""
             "conversation_id": self.conversation_id,
             "stage": self.conversation_stage,
             "requirements": self.requirements,
+            "message_count": self.message_count,
             "memory": {
                 "messages": messages
             },
@@ -1121,6 +1229,280 @@ Make it actionable and ready for Cursor AI to execute.
             "template": template,
             "requirements": json.dumps(requirements, indent=2),
             "poc_name": poc_name
+        })
+        
+        return result.content
+    
+    # ===== PRD Generation =====
+    
+    def generate_prd(self, requirements: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """
+        Generate comprehensive PRD markdown file for Cursor implementation.
+        
+        Args:
+            requirements (dict): Complete requirements from conversation
+            user_id (str): User ID for tracking
+            
+        Returns:
+            dict: PRD generation result with structure:
+                {
+                    "prd_name": str,
+                    "file_path": str,
+                    "feature_name": str
+                }
+        """
+        # Generate friendly name
+        description = requirements.get("goal", "New Application")
+        friendly_name = self.generate_friendly_name(description)
+        
+        # Create PRD directory if doesn't exist
+        prd_dir = "prd"
+        os.makedirs(prd_dir, exist_ok=True)
+        
+        # Generate timestamp for uniqueness
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        prd_filename = f"{friendly_name}-{timestamp}-prd.md"
+        prd_path = os.path.join(prd_dir, prd_filename)
+        
+        print(f"✓ Generating PRD: {prd_filename}")
+        
+        # Generate PRD content
+        prd_content = self._generate_prd_content(requirements, friendly_name)
+        
+        # Write PRD file
+        with open(prd_path, "w") as f:
+            f.write(prd_content)
+        
+        print(f"✓ PRD saved to: {prd_path}")
+        
+        return {
+            "prd_name": prd_filename,
+            "file_path": prd_path,
+            "feature_name": friendly_name,
+            "description": description
+        }
+    
+    def _generate_prd_content(self, requirements: Dict[str, Any], feature_name: str) -> str:
+        """Generate comprehensive PRD markdown content with Cursor instructions."""
+        
+        prompt = PromptTemplate(
+            input_variables=["requirements", "feature_name"],
+            template="""Generate a comprehensive Product Requirements Document (PRD) in markdown format.
+
+Feature Name: {feature_name}
+Requirements: {requirements}
+
+Create a PRD with these sections:
+
+# {feature_name} - Product Requirements Document
+
+## Overview
+[2-3 sentence description of what this feature does and why]
+
+## Goals
+- [Goal 1: What users will be able to accomplish]
+- [Goal 2: Business or user value]
+- [Goal 3: Success metric]
+
+## User Stories
+- As a [user type], I want to [action] so that [benefit]
+- As a [user type], I want to [action] so that [benefit]
+- As a [user type], I want to [action] so that [benefit]
+
+## Technical Stack (Boot_Lang)
+- **Frontend**: React 19 + Tailwind CSS
+- **Backend**: FastAPI + Python 3.11
+- **Database**: SQLite with SQLAlchemy ORM
+- **AI Features**: LangChain + OpenAI (if applicable)
+
+## Features & Requirements
+
+### Feature 1: [Name]
+**Description**: [What it does]
+**Requirements**:
+- [Requirement 1]
+- [Requirement 2]
+- [Requirement 3]
+
+### Feature 2: [Name]
+**Description**: [What it does]
+**Requirements**:
+- [Requirement 1]
+- [Requirement 2]
+
+## Data Model
+
+**Tables/Models**:
+```python
+# Example model structure
+class ExampleModel(Base):
+    __tablename__ = "examples"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    # Add other fields based on requirements
+```
+
+[List all database models needed with fields]
+
+## API Endpoints
+
+### Backend Routes
+- `POST /api/{feature_name}/create` - Create new item
+- `GET /api/{feature_name}/list` - List all items for user
+- `GET /api/{feature_name}/{{id}}` - Get single item
+- `PUT /api/{feature_name}/{{id}}` - Update item
+- `DELETE /api/{feature_name}/{{id}}` - Delete item
+
+[Define all endpoints with methods and paths]
+
+## UI/UX Requirements
+
+### Pages
+1. **Main Page** - [Description and purpose]
+2. **Detail Page** - [Description and purpose]
+3. **Form Page** - [Description and purpose]
+
+### Key Components
+- `ComponentName1` - [Purpose]
+- `ComponentName2` - [Purpose]
+
+### Styling
+- [Color scheme and visual requirements]
+- [Layout preferences]
+- [User experience notes]
+
+## Out of Scope
+- [Feature not included in this PRD]
+- [Future enhancement]
+- [Not part of MVP]
+
+## Success Criteria
+- [ ] Users can [action 1]
+- [ ] Users can [action 2]
+- [ ] Data persists correctly
+- [ ] All CRUD operations work
+- [ ] UI is responsive and matches requirements
+
+---
+
+## Implementation Instructions for Cursor AI (Claude 4.5 Sonnet)
+
+### Phase 1: Database Setup
+
+**Instruction**: Add database models to `database.py`
+
+```python
+# Add these models to database.py after existing models
+
+[Generate complete SQLAlchemy model code based on data requirements]
+```
+
+**Run migration**:
+```bash
+source venv/bin/activate
+python3 database.py
+```
+
+### Phase 2: Backend API
+
+**Instruction**: Create new FastAPI router file `{feature_name}_api.py`
+
+```python
+# Create {feature_name}_api.py
+
+[Generate complete FastAPI router code with all endpoints, including:
+- Pydantic models for request/response
+- All CRUD operations
+- Authentication using get_current_user from auth.py
+- Database session management using get_db from database.py
+- Error handling with HTTPException
+]
+```
+
+**Register router in app.py**:
+```python
+from {feature_name}_api import router as {feature_name}_router
+app.include_router({feature_name}_router)
+```
+
+### Phase 3: Frontend Components
+
+**Instruction**: Create React components in `frontend/src/components/`
+
+1. **Main Component** (`{feature_name}/{feature_name}.tsx`):
+[Generate complete React component code with:
+- TypeScript interfaces
+- State management
+- API calls to backend
+- Tailwind CSS styling
+- Authentication using useAuth
+]
+
+2. **Form Component** (if needed)
+3. **List Component** (if needed)
+
+**Add routing in App.tsx**:
+```tsx
+import {feature_name}Component from './components/{feature_name}/{feature_name}';
+
+// Add route:
+<Route path="/{feature_name}" element={{
+  <ProtectedRoute>
+    <{feature_name}Component />
+  </ProtectedRoute>
+}} />
+```
+
+### Testing Checklist
+
+**Backend Testing**:
+```bash
+# Start backend
+source venv/bin/activate
+python3 app.py
+
+# Test endpoints with curl
+curl -X POST http://localhost:8000/api/{feature_name}/create \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{{"field": "value"}}'
+```
+
+**Frontend Testing**:
+```bash
+# Start frontend
+cd frontend
+npm start
+
+# Navigate to http://localhost:3000/{feature_name}
+# Test all user flows
+```
+
+### Deployment
+
+Once tested locally:
+```bash
+# Commit changes
+git add .
+git commit -m "feat: implement {feature_name}"
+git push origin main
+```
+
+GitHub Actions will automatically deploy to Azure.
+
+---
+
+**PRD Version**: 1.0
+**Created**: {timestamp}
+**Boot_Lang Stack**: React 19, FastAPI, SQLite, LangChain
+"""
+        )
+        
+        chain = prompt | self.llm
+        result = chain.invoke({
+            "requirements": json.dumps(requirements, indent=2),
+            "feature_name": feature_name,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         
         return result.content

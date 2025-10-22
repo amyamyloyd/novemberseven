@@ -1,0 +1,167 @@
+---
+alwaysApply: false
+---
+fileType: any
+name: azure.mdc
+description: Azure deployment and configuration patterns
+---
+
+# ☁️ Azure Deployment Patterns
+
+You are deploying code to Azure. Boot_Lang uses Azure App Service (backend) and Azure Static Web Apps (frontend) with GitHub Actions automation.
+
+---
+
+## Deployment Workflow
+
+1. **User commits code** → GitHub
+2. **GitHub Actions triggers** automatically
+3. **Backend deploys** to Azure App Service (port 8000)
+4. **Frontend builds** and deploys to Azure Static Web Apps
+5. **Environment variables** loaded from GitHub Secrets
+
+**You never manually deploy. Git push triggers everything.**
+
+---
+
+## CORS Configuration
+
+### Backend (app.py)
+CORS is pre-configured for Azure URLs. If adding new Azure domain:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://your-app.azurewebsites.net",
+        "https://your-static-app.azurestaticapps.net"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+```
+
+Add new URL to list, commit, push.
+
+---
+
+## Environment Variables
+
+### GitHub Secrets (Already Set)
+These are configured in `user_config.json` and pushed to GitHub Secrets:
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY` (optional)
+- `LANGSMITH_API_KEY` (optional)
+
+### Azure App Service (Backend)
+Environment variables are set automatically from GitHub Secrets via `.github/workflows/deploy.yml`.
+
+To add new variable:
+1. Add to `user_config.json`
+2. Update `automation.sh` to set GitHub secret
+3. Update `.github/workflows/deploy.yml` to pass to Azure
+
+---
+
+## GitHub Actions Workflow
+
+### Check Deployment Status
+```bash
+# View recent deployments
+gh run list
+
+# View specific run logs
+gh run view <run-id>
+```
+
+Or visit: `https://github.com/<username>/<repo>/actions`
+
+### Workflow Files
+- `.github/workflows/deploy.yml` - Backend deployment
+- `.github/workflows/azure-static-web-apps-*.yml` - Frontend deployment
+
+**Never edit these directly unless you know Azure config.**
+
+---
+
+## Azure Logs
+
+### Backend Logs (App Service)
+```bash
+# Stream live logs
+az webapp log tail --name <app-service-name> --resource-group <resource-group>
+
+# Download logs
+az webapp log download --name <app-service-name> --resource-group <resource-group>
+```
+
+Or use Azure Portal → App Service → Logs
+
+### Frontend Logs (Static Web Apps)
+Azure Portal → Static Web Apps → Your App → Logs
+
+---
+
+## Branch Strategy
+
+### Main Branch → Production
+- `main` branch deploys to production automatically
+- Always test locally first
+- Commit messages trigger deployment
+
+### Feature Branches (Optional)
+- Create feature branch: `git checkout -b feature/new-feature`
+- Push to GitHub: `git push origin feature/new-feature`
+- Merge to main when ready: `git checkout main && git merge feature/new-feature`
+
+---
+
+## Common Issues
+
+### CORS Errors
+- Check `allow_origins` in `app.py`
+- Add Azure URL to CORS list
+- Redeploy backend
+
+### Environment Variables Not Working
+- Verify GitHub Secrets exist: `gh secret list`
+- Check `.github/workflows/deploy.yml` passes secrets to Azure
+- Restart App Service
+
+### Deployment Failed
+- Check GitHub Actions logs
+- Common cause: syntax errors, missing dependencies
+- Fix locally, test, commit, push again
+
+### API Returns 500
+- Check Azure App Service logs
+- Common cause: missing env vars, database path issues
+
+---
+
+## Key Rules
+
+1. **Never manually deploy** - always use git push
+2. **Always test locally first** - start backend + frontend
+3. **Never commit secrets** - use GitHub Secrets only
+4. **Always check GitHub Actions** after push
+5. **Update CORS** when adding new Azure URLs
+6. **Use Azure logs** for debugging production issues
+
+---
+
+## Deployment Checklist
+
+Before deploying new feature:
+- [ ] Code works locally
+- [ ] Backend runs: `python3 app.py`
+- [ ] Frontend builds: `cd frontend && npm run build`
+- [ ] No linter errors
+- [ ] Commit with clear message
+- [ ] Push to GitHub
+- [ ] Watch GitHub Actions for success
+- [ ] Test deployed URL

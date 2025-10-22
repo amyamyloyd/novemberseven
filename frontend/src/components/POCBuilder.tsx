@@ -17,23 +17,31 @@ interface POC {
   created_at: string;
 }
 
+interface PRD {
+  prd_name: string;
+  file_path: string;
+  feature_name: string;
+  created_at: string;
+}
+
 interface Message {
   role: 'user' | 'agent';
   content: string;
   timestamp: Date;
 }
 
-const POCBuilder: React.FC = () => {
+const PRDBuilder: React.FC = () => {
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState<'documents' | 'pocs'>('documents');
+  const [activeTab, setActiveTab] = useState<'documents' | 'prds'>('documents');
   
   // Documents state
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
   
-  // POCs state
-  const [pocs, setPocs] = useState<POC[]>([]);
-  const [selectedPoc, setSelectedPoc] = useState<POC | null>(null);
+  // PRDs state
+  const [prds, setPrds] = useState<PRD[]>([]);
+  const [selectedPrd, setSelectedPrd] = useState<PRD | null>(null);
+  const [prdContent, setPrdContent] = useState<string>('');
   
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
@@ -64,24 +72,22 @@ const POCBuilder: React.FC = () => {
     }
   }, [token]);
 
-  const loadPOCs = useCallback(async () => {
+  const loadPRDs = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/poc/list', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setPocs(response.data);
+      const response = await axios.get('http://localhost:8000/api/poc/list-prds');
+      setPrds(response.data);
     } catch (error) {
-      console.error('Failed to load POCs:', error);
+      console.error('Failed to load PRDs:', error);
     }
-  }, [token]);
+  }, []);
 
-  // Load documents and POCs
+  // Load documents and PRDs
   useEffect(() => {
     if (token) {
       loadDocuments();
-      loadPOCs();
+      loadPRDs();
     }
-  }, [token, loadDocuments, loadPOCs]);
+  }, [token, loadDocuments, loadPRDs]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -130,14 +136,54 @@ const POCBuilder: React.FC = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
 
+    // Check if user is asking to generate PRD
+    const generatePrdKeywords = ['generate prd', 'generate a prd', 'create prd', 'create a prd', 'build prd', 'build a prd'];
+    const shouldGeneratePrd = generatePrdKeywords.some(keyword => userInput.toLowerCase().includes(keyword));
+
+    if (shouldGeneratePrd && conversationId) {
+      try {
+        // Generate PRD
+        const prdResponse = await axios.post(
+          'http://localhost:8000/api/poc/generate-prd',
+          {
+            requirements: {} // Agent will extract from conversation
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        const successMessage: Message = {
+          role: 'agent',
+          content: `✅ PRD Generated!\n\n**File**: ${prdResponse.data.prd_name}\n**Feature**: ${prdResponse.data.feature_name}\n**Location**: /prd/${prdResponse.data.prd_name}\n\nYour PRD has been saved with complete implementation instructions for Cursor AI. You can now use the command "Build my PRD" to implement this feature.`,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, successMessage]);
+        loadPRDs(); // Refresh PRD list
+      } catch (error: any) {
+        const errorMessage: Message = {
+          role: 'agent',
+          content: 'Error generating PRD: ' + (error.response?.data?.detail || 'Failed to generate PRD'),
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+      return;
+    }
+
+    // Normal chat flow
     try {
       const response = await axios.post(
         'http://localhost:8000/api/poc/chat',
         {
-          prompt: input,
+          prompt: userInput,
           conversation_history: conversationId ? { conversation_id: conversationId } : null
         },
         {
@@ -165,34 +211,6 @@ const POCBuilder: React.FC = () => {
     }
   };
 
-  const handleGeneratePOC = async () => {
-    if (!window.confirm('Generate POC with current requirements?')) return;
-
-    setIsTyping(true);
-    try {
-      const response = await axios.post(
-        'http://localhost:8000/api/poc/generate',
-        {
-          requirements: {} // Will be extracted from conversation
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      const successMessage: Message = {
-        role: 'agent',
-        content: `POC "${response.data.poc_name}" generated successfully! ID: ${response.data.poc_id}`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, successMessage]);
-      loadPOCs();
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'POC generation failed');
-    } finally {
-      setIsTyping(false);
-    }
-  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -212,13 +230,13 @@ const POCBuilder: React.FC = () => {
           </button>
           <button
             className={`flex-1 py-3 px-4 font-medium ${
-              activeTab === 'pocs'
+              activeTab === 'prds'
                 ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
                 : 'text-gray-600 hover:bg-gray-50'
             }`}
-            onClick={() => setActiveTab('pocs')}
+            onClick={() => setActiveTab('prds')}
           >
-            POCs
+            PRDs
           </button>
         </div>
 
@@ -284,23 +302,33 @@ const POCBuilder: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {pocs.length === 0 ? (
-                <p className="text-gray-500 text-sm">No POCs created yet</p>
+              {prds.length === 0 ? (
+                <p className="text-gray-500 text-sm">No PRDs created yet</p>
               ) : (
-                pocs.map(poc => (
+                prds.map(prd => (
                   <div
-                    key={poc.id}
+                    key={prd.prd_name}
                     className={`p-3 rounded-lg cursor-pointer transition ${
-                      selectedPoc?.id === poc.id
+                      selectedPrd?.prd_name === prd.prd_name
                         ? 'bg-blue-100 border border-blue-300'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
-                    onClick={() => setSelectedPoc(poc)}
+                    onClick={async () => {
+                      setSelectedPrd(prd);
+                      // Load PRD content
+                      try {
+                        const response = await axios.get(`http://localhost:8000/api/poc/prd/${prd.prd_name}`);
+                        setPrdContent(response.data.content);
+                      } catch (error) {
+                        console.error('Failed to load PRD content:', error);
+                        setPrdContent('Failed to load PRD content');
+                      }
+                    }}
                   >
-                    <p className="font-medium text-sm">{poc.poc_name}</p>
-                    <p className="text-xs text-gray-600 mt-1">{poc.description}</p>
+                    <p className="font-medium text-sm">{prd.feature_name}</p>
+                    <p className="text-xs text-gray-600 mt-1">{prd.prd_name}</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {new Date(poc.created_at).toLocaleDateString()}
+                      {new Date(prd.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 ))
@@ -314,42 +342,71 @@ const POCBuilder: React.FC = () => {
       <div className="w-3/5 flex flex-col">
         {/* Chat Header */}
         <div className="bg-white border-b p-4">
-          <h1 className="text-xl font-bold text-gray-800">POC Agent</h1>
+          <h1 className="text-xl font-bold text-gray-800">PRD Builder</h1>
           <p className="text-sm text-gray-500">Technical Product Manager AI</p>
         </div>
 
-        {/* Messages */}
+        {/* Messages or PRD Preview */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 && (
+          {selectedPrd && prdContent ? (
+            <div className="bg-white rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">{selectedPrd.feature_name}</h2>
+                <button
+                  onClick={() => {
+                    setSelectedPrd(null);
+                    setPrdContent('');
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <div className="prose max-w-none">
+                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono bg-gray-50 p-4 rounded overflow-x-auto">
+                  {prdContent}
+                </pre>
+              </div>
+              <div className="mt-4 p-4 bg-blue-50 rounded">
+                <p className="text-sm text-gray-700">
+                  <strong>To implement this PRD:</strong> Tell Cursor "Build my PRD" or "Build {selectedPrd.prd_name}"
+                </p>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
               <p className="text-lg font-medium">Start a conversation</p>
               <p className="text-sm mt-2">Tell me what you'd like to build!</p>
             </div>
+          ) : null}
+          
+          {!selectedPrd && messages.length > 0 && (
+            <>
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-800'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    }`}>
+                      {msg.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </>
           )}
           
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-800'
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                <p className={`text-xs mt-1 ${
-                  msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  {msg.timestamp.toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-          ))}
-          
-          {isTyping && (
+          {!selectedPrd && isTyping && (
             <div className="flex justify-start">
               <div className="bg-gray-200 rounded-lg p-3">
                 <p className="text-sm text-gray-600">Agent is typing...</p>
@@ -360,40 +417,32 @@ const POCBuilder: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
-        <div className="bg-white border-t p-4">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isTyping}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={isTyping || !input.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Send
-            </button>
+        {/* Input Area - Hide when viewing PRD */}
+        {!selectedPrd && (
+          <div className="bg-white border-t p-4">
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Type your message..."
+                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isTyping}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={isTyping || !input.trim()}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                Send
+              </button>
+            </div>
           </div>
-          
-          {conversationId && (
-            <button
-              onClick={handleGeneratePOC}
-              disabled={isTyping}
-              className="mt-2 w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Generate POC
-            </button>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default POCBuilder;
+export default PRDBuilder;

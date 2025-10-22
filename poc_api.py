@@ -168,7 +168,8 @@ def delete_document(
 @router.post("/chat", response_model=ChatResponse)
 def chat_with_agent(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     Chat with POC Agent.
@@ -183,6 +184,29 @@ def chat_with_agent(
             document_ids=request.document_ids,
             conversation_history=request.conversation_history
         )
+        
+        # Update requirements from conversation after each message
+        agent.update_requirements_from_conversation()
+        
+        # Save conversation to database
+        if agent.conversation_id:
+            # Check if conversation exists
+            conv = db.query(POCConversation).filter(
+                POCConversation.user_id == current_user.id
+            ).order_by(POCConversation.created_at.desc()).first()
+            
+            if not conv:
+                # Create new conversation
+                conv = POCConversation(
+                    user_id=current_user.id,
+                    conversation_history=agent.save_conversation()
+                )
+                db.add(conv)
+            else:
+                # Update existing conversation
+                conv.conversation_history = agent.save_conversation()
+            
+            db.commit()
         
         return ChatResponse(**result)
         
@@ -244,6 +268,133 @@ def generate_poc(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"POC generation failed: {str(e)}")
+
+
+class PRDResponse(BaseModel):
+    prd_name: str
+    file_path: str
+    feature_name: str
+    description: str
+
+
+@router.post("/generate-prd", response_model=PRDResponse)
+def generate_prd(
+    request: GenerateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate PRD markdown file for Cursor implementation.
+    
+    Saves to /prd/ folder with comprehensive implementation instructions.
+    """
+    try:
+        agent = get_poc_agent()
+        
+        # Use provided requirements or extract from agent state
+        requirements = request.requirements
+        if not requirements or not requirements.get("goal"):
+            # Try to extract from agent's current state
+            requirements = agent.requirements if hasattr(agent, 'requirements') and agent.requirements else request.requirements
+        
+        # If still no requirements, try extracting from latest conversation
+        if not requirements or not requirements.get("goal"):
+            # Get latest conversation for this user
+            latest_conv = db.query(POCConversation).filter(
+                POCConversation.user_id == current_user.id
+            ).order_by(POCConversation.created_at.desc()).first()
+            
+            if latest_conv and latest_conv.conversation_history:
+                # Try to extract from stored conversation
+                conv_data = latest_conv.conversation_history
+                if isinstance(conv_data, dict) and conv_data.get("requirements"):
+                    requirements = conv_data["requirements"]
+        
+        # Ensure we have at least basic requirements
+        if not requirements or not requirements.get("goal"):
+            raise HTTPException(
+                status_code=400,
+                detail="Requirements not complete. Please have a conversation about what you want to build first."
+            )
+        
+        result = agent.generate_prd(
+            requirements=requirements,
+            user_id=str(current_user.id)
+        )
+        
+        # Save conversation with PRD reference
+        if hasattr(agent, 'conversation_id') and agent.conversation_id:
+            conv = db.query(POCConversation).filter(
+                POCConversation.user_id == current_user.id
+            ).order_by(POCConversation.created_at.desc()).first()
+            
+            if not conv:
+                conv = POCConversation(
+                    user_id=current_user.id,
+                    conversation_history=agent.save_conversation()
+                )
+                db.add(conv)
+            else:
+                conv.conversation_history = agent.save_conversation()
+            
+            db.commit()
+        
+        return PRDResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PRD generation failed: {str(e)}")
+
+
+@router.get("/list-prds")
+def list_prds():
+    """List all PRD files in /prd/ folder."""
+    prd_dir = "prd"
+    
+    if not os.path.exists(prd_dir):
+        return []
+    
+    prds = []
+    for filename in os.listdir(prd_dir):
+        if filename.endswith("-prd.md"):
+            file_path = os.path.join(prd_dir, filename)
+            stat = os.stat(file_path)
+            
+            # Extract feature name from filename (format: feature_name-timestamp-prd.md)
+            feature_name = filename.replace("-prd.md", "").rsplit("-", 1)[0]
+            
+            prds.append({
+                "prd_name": filename,
+                "file_path": file_path,
+                "feature_name": feature_name,
+                "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat()
+            })
+    
+    # Sort by creation time (newest first)
+    prds.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return prds
+
+
+@router.get("/prd/{prd_name}")
+def get_prd_content(prd_name: str):
+    """Get PRD file content."""
+    prd_path = os.path.join("prd", prd_name)
+    
+    if not os.path.exists(prd_path):
+        raise HTTPException(status_code=404, detail="PRD not found")
+    
+    try:
+        with open(prd_path, "r") as f:
+            content = f.read()
+        
+        return {
+            "prd_name": prd_name,
+            "content": content
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read PRD: {str(e)}")
 
 
 @router.get("/list")
