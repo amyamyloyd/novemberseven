@@ -31,7 +31,7 @@ class SetupHandler(BaseHTTPRequestHandler):
             
             # Read progress log
             if os.path.exists('setup_progress.log'):
-                with open('setup_progress.log', 'r') as f:
+                with open('setup_progress.log', 'r', encoding='utf-8') as f:
                     lines = f.readlines()
                 
                 progress = []
@@ -58,7 +58,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                 # Extract GitHub URL for actions link
                 github_url = ""
                 try:
-                    with open('user_config.json', 'r') as f:
+                    with open('user_config.json', 'r', encoding='utf-8') as f:
                         config = json.load(f)
                         github_url = config.get('git_deployment', {}).get('github_repo_url', '')
                         github_url = github_url.replace('.git', '') + '/actions'
@@ -87,7 +87,7 @@ class SetupHandler(BaseHTTPRequestHandler):
             self.end_headers()
             
             if os.path.exists('user_config.json'):
-                with open('user_config.json', 'r') as f:
+                with open('user_config.json', 'r', encoding='utf-8') as f:
                     self.wfile.write(f.read().encode())
             else:
                 default_config = {
@@ -162,7 +162,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                     }
                 }
                 
-                with open('user_config.json', 'w') as f:
+                with open('user_config.json', 'w', encoding='utf-8') as f:
                     json.dump(config_dict, f, indent=2)
                 
                 self.send_response(200)
@@ -208,10 +208,10 @@ class SetupHandler(BaseHTTPRequestHandler):
                     self.end_headers()
                     # Save git_initialized flag to config
                     if os.path.exists('user_config.json'):
-                        with open('user_config.json', 'r') as f:
+                        with open('user_config.json', 'r', encoding='utf-8') as f:
                             config = json.load(f)
                         config['git_initialized'] = True
-                        with open('user_config.json', 'w') as f:
+                        with open('user_config.json', 'w', encoding='utf-8') as f:
                             json.dump(config, f, indent=2)
                     
                     self.wfile.write(json.dumps({
@@ -294,11 +294,11 @@ class SetupHandler(BaseHTTPRequestHandler):
                     }
                 }
                 
-                with open('user_config.json', 'w') as f:
+                with open('user_config.json', 'w', encoding='utf-8') as f:
                     json.dump(config_dict, f, indent=2)
                 
-                print("✓ Configuration saved successfully")
-                print("✓ Starting automation in background...")
+                print("[OK] Configuration saved successfully")
+                print("[OK] Starting automation in background...")
                 
                 # Trigger automation script in background
                 import subprocess
@@ -345,5 +345,5 @@ if __name__ == "__main__":
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n\n✓ Setup server stopped")
+        print("\n\n[OK] Setup server stopped")
         server.shutdown()

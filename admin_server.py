@@ -56,7 +56,7 @@ class AdminHandler(BaseHTTPRequestHandler):
     def get_project_info(self):
         """Get project information from config."""
         try:
-            with open('user_config.json', 'r') as f:
+            with open('user_config.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
             return {
@@ -120,7 +120,7 @@ class AdminHandler(BaseHTTPRequestHandler):
     def get_azure_info(self):
         """Get Azure deployment URLs from config."""
         try:
-            with open('user_config.json', 'r') as f:
+            with open('user_config.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
             
             azure = config.get('azure_settings', {})
@@ -497,7 +497,7 @@ class AdminHandler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🎯 Boot Lang Admin Dashboard")
+    print("[ADMIN] Boot Lang Admin Dashboard")
     print("=" * 60)
     print("\nAccess at: http://localhost:8080")
     print("\nPress Ctrl+C to stop")
@@ -508,6 +508,6 @@ if __name__ == "__main__":
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n\n✅ Admin dashboard stopped")
+        print("\n\n[OK] Admin dashboard stopped")
         server.shutdown()
 

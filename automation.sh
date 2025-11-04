@@ -7,13 +7,13 @@ set -e
 # STEP 0: Authenticate GitHub and Azure CLIs
 # ==================================================
 echo "=================================================="
-echo "  🔐 CLI Authentication"
+echo "  [AUTH] CLI Authentication"
 echo "=================================================="
 echo ""
 
 # Check if GitHub CLI is installed
 if ! command -v gh &> /dev/null; then
-    echo "❌ GitHub CLI not found"
+    echo "[ERROR] GitHub CLI not found"
     echo ""
     echo "Please install GitHub CLI:"
     echo "  macOS:   brew install gh"
@@ -25,7 +25,7 @@ fi
 
 # Check if Azure CLI is installed
 if ! command -v az &> /dev/null; then
-    echo "❌ Azure CLI not found"
+    echo "[ERROR] Azure CLI not found"
     echo ""
     echo "Please install Azure CLI:"
     echo "  macOS:   brew install azure-cli"
@@ -35,11 +35,11 @@ if ! command -v az &> /dev/null; then
     exit 1
 fi
 
-echo "✅ CLIs installed"
+echo "[OK] CLIs installed"
 echo ""
 
 # Authenticate GitHub CLI
-echo "→ Authenticating GitHub CLI..."
+echo "-> Authenticating GitHub CLI..."
 echo "  (Browser will open for authentication)"
 echo ""
 
@@ -47,17 +47,17 @@ if ! gh auth status &> /dev/null; then
     gh auth login --web --git-protocol https
     
     if [ $? -ne 0 ]; then
-        echo "❌ GitHub authentication failed"
+        echo "[ERROR] GitHub authentication failed"
         echo "Please try again or check your network connection"
         exit 1
     fi
 fi
 
-echo "✅ GitHub CLI authenticated"
+echo "[OK] GitHub CLI authenticated"
 echo ""
 
 # Authenticate Azure CLI
-echo "→ Authenticating Azure CLI..."
+echo "-> Authenticating Azure CLI..."
 echo "  (Browser will open for authentication)"
 echo ""
 
@@ -65,30 +65,30 @@ if ! az account show &> /dev/null; then
     az login --use-device-code
     
     if [ $? -ne 0 ]; then
-        echo "❌ Azure authentication failed"
+        echo "[ERROR] Azure authentication failed"
         echo "Please try again or check your network connection"
         exit 1
     fi
 fi
 
-echo "✅ Azure CLI authenticated"
+echo "[OK] Azure CLI authenticated"
 echo ""
 
 # Load Azure subscription ID from config
 AZURE_SUBSCRIPTION=$(python3 -c "import json; print(json.load(open('user_config.json'))['azure_settings'].get('subscription_id', ''))" 2>/dev/null || echo "")
 
 if [ -n "$AZURE_SUBSCRIPTION" ]; then
-    echo "→ Setting Azure subscription..."
+    echo "-> Setting Azure subscription..."
     az account set --subscription "$AZURE_SUBSCRIPTION"
     
     if [ $? -ne 0 ]; then
-        echo "⚠️  Failed to set subscription $AZURE_SUBSCRIPTION"
+        echo "[WARN] Failed to set subscription $AZURE_SUBSCRIPTION"
         echo "Using default subscription instead"
     else
-        echo "✅ Azure subscription set: $AZURE_SUBSCRIPTION"
+        echo "[OK] Azure subscription set: $AZURE_SUBSCRIPTION"
     fi
 else
-    echo "⚠️  No Azure subscription ID in config - using default"
+    echo "[WARN] No Azure subscription ID in config - using default"
 fi
 
 echo ""
@@ -115,9 +115,9 @@ ANTHROPIC_API_KEY=$(python3 -c "import json; print(json.load(open('user_config.j
 LANGSMITH_API_KEY=$(python3 -c "import json; print(json.load(open('user_config.json'))['api_keys'].get('langsmith_api_key', ''))" 2>/dev/null || echo "")
 
 # Configure git remote
-echo "→ Configuring git remote..."
+echo "-> Configuring git remote..."
 git remote add origin "$GITHUB_URL" 2>/dev/null || git remote set-url origin "$GITHUB_URL"
-echo "✅ Git remote configured: $GITHUB_URL"
+echo "[OK] Git remote configured: $GITHUB_URL"
 echo ""
 
 # Create progress log
@@ -295,12 +295,12 @@ if command -v gh &> /dev/null; then
         if [ -n "$LANGSMITH_API_KEY" ]; then
             echo "$LANGSMITH_API_KEY" | gh secret set LANGSMITH_API_KEY
         fi
-        echo "✓ GitHub secrets set successfully"
+        echo "[OK] GitHub secrets set successfully"
     else
-        echo "⚠️ GitHub CLI not authenticated - secrets not set"
+        echo "[WARN] GitHub CLI not authenticated - secrets not set"
     fi
 else
-    echo "⚠️ GitHub CLI not installed - secrets not set"
+    echo "[WARN] GitHub CLI not installed - secrets not set"
 fi
 echo "DONE:Setting GitHub secrets" >> setup_progress.log
 
@@ -315,7 +315,7 @@ echo "DONE:Pushing to GitHub" >> setup_progress.log
 echo "PROGRESS:Creating dev environment" >> setup_progress.log
 
 echo ""
-echo "→ Creating dev branch..."
+echo "-> Creating dev branch..."
 
 # Create dev branch from main
 git checkout -b dev > /dev/null 2>&1 || git checkout dev > /dev/null 2>&1
@@ -323,17 +323,17 @@ git checkout -b dev > /dev/null 2>&1 || git checkout dev > /dev/null 2>&1
 # Push dev branch to GitHub
 git push -u origin dev --force > /dev/null 2>&1 || true
 
-echo "✅ Dev branch created and pushed"
+echo "[OK] Dev branch created and pushed"
 echo ""
 
 # Create Azure deployment slot for dev environment
-echo "→ Creating Azure deployment slot (dev)..."
+echo "-> Creating Azure deployment slot (dev)..."
 
 # Extract resource group from config
 RESOURCE_GROUP=$(python3 -c "import json; print(json.load(open('user_config.json'))['azure_settings']['resource_group'])" 2>/dev/null || echo "")
 
 if [ -z "$RESOURCE_GROUP" ]; then
-    echo "⚠️  Resource group not found in config - skipping dev slot creation"
+    echo "[WARN] Resource group not found in config - skipping dev slot creation"
     echo "  You can create it manually later in Azure Portal"
 else
     # Set subscription if provided
@@ -352,10 +352,10 @@ else
     # Get dev slot URL
     DEV_SLOT_URL="https://${APP_SERVICE_NAME}-dev.azurewebsites.net"
     
-    echo "✅ Dev slot created: $DEV_SLOT_URL"
+    echo "[OK] Dev slot created: $DEV_SLOT_URL"
     
     # Set environment variables for dev slot
-    echo "→ Configuring dev slot environment..."
+    echo "-> Configuring dev slot environment..."
     
     az webapp config appsettings set \
         --name "$APP_SERVICE_NAME" \
@@ -369,7 +369,7 @@ else
             LANGSMITH_API_KEY="$LANGSMITH_API_KEY" \
         --output none 2>/dev/null
     
-    echo "✅ Dev slot environment configured"
+    echo "[OK] Dev slot environment configured"
     
     # Save dev URL to config
     python3 << EOF
@@ -415,14 +415,14 @@ if [ -n "$AZURE_STATIC_URL" ]; then
         if [ "$HTTP_CODE" = "200" ]; then
             # Additional verification: check if config.js exists and has user data
             if echo "$CONFIG_CONTENT" | grep -q "$USER_NAME" 2>/dev/null; then
-                echo "✓ Deployment verified! Site live with user config (HTTP $HTTP_CODE)"
+                echo "[OK] Deployment verified! Site live with user config (HTTP $HTTP_CODE)"
                 DEPLOYMENT_VERIFIED=true
                 echo "DONE:Verifying deployment" >> setup_progress.log
                 echo "COMPLETE:$AZURE_STATIC_URL" >> setup_progress.log
                 break
             elif [ "$HTTP_CODE" = "200" ]; then
                 # Page loads but config might be embedded differently - still count as success
-                echo "✓ Deployment verified! Site responding (HTTP $HTTP_CODE)"
+                echo "[OK] Deployment verified! Site responding (HTTP $HTTP_CODE)"
                 DEPLOYMENT_VERIFIED=true
                 echo "DONE:Verifying deployment" >> setup_progress.log
                 echo "COMPLETE:$AZURE_STATIC_URL" >> setup_progress.log
@@ -430,13 +430,13 @@ if [ -n "$AZURE_STATIC_URL" ]; then
             fi
         fi
         
-        echo "⏳ Waiting for deployment... (attempt $i/36, HTTP $HTTP_CODE)"
+        echo "[WAIT] Waiting for deployment... (attempt $i/36, HTTP $HTTP_CODE)"
         sleep 5
     done
 fi
 
 if [ "$DEPLOYMENT_VERIFIED" = false ]; then
-    echo "⚠️ Deployment verification timed out after 3 minutes"
+    echo "[WARN] Deployment verification timed out after 3 minutes"
     echo "  URL: $AZURE_STATIC_URL"
     echo "  This may mean GitHub Actions is still building (check: https://github.com/$(echo $GITHUB_URL | sed 's|https://github.com/||' | sed 's|.git||')/actions)"
     echo "  Your site may still deploy successfully - check the URL in a few minutes"
@@ -452,7 +452,7 @@ pkill -f setup_server.py
 
 echo ""
 echo "=================================================="
-echo "  ✅ Setup Complete!"
+echo "  [OK] Setup Complete!"
 echo "=================================================="
 echo ""
 echo "Your Boot Lang environment is ready!"
