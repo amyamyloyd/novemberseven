@@ -3,6 +3,100 @@
 
 set -e
 
+# ==================================================
+# STEP 0: Authenticate GitHub and Azure CLIs
+# ==================================================
+echo "=================================================="
+echo "  🔐 CLI Authentication"
+echo "=================================================="
+echo ""
+
+# Check if GitHub CLI is installed
+if ! command -v gh &> /dev/null; then
+    echo "❌ GitHub CLI not found"
+    echo ""
+    echo "Please install GitHub CLI:"
+    echo "  macOS:   brew install gh"
+    echo "  Linux:   (visit https://cli.github.com/)"
+    echo "  Windows: winget install GitHub.cli"
+    echo ""
+    exit 1
+fi
+
+# Check if Azure CLI is installed
+if ! command -v az &> /dev/null; then
+    echo "❌ Azure CLI not found"
+    echo ""
+    echo "Please install Azure CLI:"
+    echo "  macOS:   brew install azure-cli"
+    echo "  Linux:   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash"
+    echo "  Windows: winget install Microsoft.AzureCLI"
+    echo ""
+    exit 1
+fi
+
+echo "✅ CLIs installed"
+echo ""
+
+# Authenticate GitHub CLI
+echo "→ Authenticating GitHub CLI..."
+echo "  (Browser will open for authentication)"
+echo ""
+
+if ! gh auth status &> /dev/null; then
+    gh auth login --web --git-protocol https
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ GitHub authentication failed"
+        echo "Please try again or check your network connection"
+        exit 1
+    fi
+fi
+
+echo "✅ GitHub CLI authenticated"
+echo ""
+
+# Authenticate Azure CLI
+echo "→ Authenticating Azure CLI..."
+echo "  (Browser will open for authentication)"
+echo ""
+
+if ! az account show &> /dev/null; then
+    az login --use-device-code
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Azure authentication failed"
+        echo "Please try again or check your network connection"
+        exit 1
+    fi
+fi
+
+echo "✅ Azure CLI authenticated"
+echo ""
+
+# Load Azure subscription ID from config
+AZURE_SUBSCRIPTION=$(python3 -c "import json; print(json.load(open('user_config.json'))['azure_settings'].get('subscription_id', ''))" 2>/dev/null || echo "")
+
+if [ -n "$AZURE_SUBSCRIPTION" ]; then
+    echo "→ Setting Azure subscription..."
+    az account set --subscription "$AZURE_SUBSCRIPTION"
+    
+    if [ $? -ne 0 ]; then
+        echo "⚠️  Failed to set subscription $AZURE_SUBSCRIPTION"
+        echo "Using default subscription instead"
+    else
+        echo "✅ Azure subscription set: $AZURE_SUBSCRIPTION"
+    fi
+else
+    echo "⚠️  No Azure subscription ID in config - using default"
+fi
+
+echo ""
+echo "=================================================="
+echo "  Starting Automated Setup"
+echo "=================================================="
+echo ""
+
 # Ensure we're on main branch
 CURRENT_BRANCH=$(git branch --show-current)
 if [ "$CURRENT_BRANCH" != "main" ]; then
@@ -19,6 +113,12 @@ APP_SERVICE_NAME=$(python3 -c "import json; print(json.load(open('user_config.js
 OPENAI_API_KEY=$(python3 -c "import json; print(json.load(open('user_config.json'))['api_keys']['openai_api_key'])")
 ANTHROPIC_API_KEY=$(python3 -c "import json; print(json.load(open('user_config.json'))['api_keys'].get('anthropic_api_key', ''))" 2>/dev/null || echo "")
 LANGSMITH_API_KEY=$(python3 -c "import json; print(json.load(open('user_config.json'))['api_keys'].get('langsmith_api_key', ''))" 2>/dev/null || echo "")
+
+# Configure git remote
+echo "→ Configuring git remote..."
+git remote add origin "$GITHUB_URL" 2>/dev/null || git remote set-url origin "$GITHUB_URL"
+echo "✅ Git remote configured: $GITHUB_URL"
+echo ""
 
 # Create progress log
 echo "Starting automation..." > setup_progress.log
@@ -211,6 +311,87 @@ git commit -m "Initial Boot_Lang setup: $PROJECT_NAME" > /dev/null 2>&1 || true
 git push -u origin main --force > /dev/null 2>&1 || true
 echo "DONE:Pushing to GitHub" >> setup_progress.log
 
+# Step 9.5: Create dev branch and Azure dev slot
+echo "PROGRESS:Creating dev environment" >> setup_progress.log
+
+echo ""
+echo "→ Creating dev branch..."
+
+# Create dev branch from main
+git checkout -b dev > /dev/null 2>&1 || git checkout dev > /dev/null 2>&1
+
+# Push dev branch to GitHub
+git push -u origin dev --force > /dev/null 2>&1 || true
+
+echo "✅ Dev branch created and pushed"
+echo ""
+
+# Create Azure deployment slot for dev environment
+echo "→ Creating Azure deployment slot (dev)..."
+
+# Extract resource group from config
+RESOURCE_GROUP=$(python3 -c "import json; print(json.load(open('user_config.json'))['azure_settings']['resource_group'])" 2>/dev/null || echo "")
+
+if [ -z "$RESOURCE_GROUP" ]; then
+    echo "⚠️  Resource group not found in config - skipping dev slot creation"
+    echo "  You can create it manually later in Azure Portal"
+else
+    # Set subscription if provided
+    if [ -n "$AZURE_SUBSCRIPTION" ]; then
+        az account set --subscription "$AZURE_SUBSCRIPTION" 2>/dev/null
+    fi
+    
+    # Create deployment slot
+    az webapp deployment slot create \
+        --name "$APP_SERVICE_NAME" \
+        --resource-group "$RESOURCE_GROUP" \
+        --slot dev \
+        --configuration-source "$APP_SERVICE_NAME" \
+        --output none 2>/dev/null || echo "  Note: Slot may already exist or requires manual creation"
+    
+    # Get dev slot URL
+    DEV_SLOT_URL="https://${APP_SERVICE_NAME}-dev.azurewebsites.net"
+    
+    echo "✅ Dev slot created: $DEV_SLOT_URL"
+    
+    # Set environment variables for dev slot
+    echo "→ Configuring dev slot environment..."
+    
+    az webapp config appsettings set \
+        --name "$APP_SERVICE_NAME" \
+        --resource-group "$RESOURCE_GROUP" \
+        --slot dev \
+        --settings \
+            ENVIRONMENT="development" \
+            PROJECT_NAME="$PROJECT_NAME" \
+            OPENAI_API_KEY="$OPENAI_API_KEY" \
+            ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+            LANGSMITH_API_KEY="$LANGSMITH_API_KEY" \
+        --output none 2>/dev/null
+    
+    echo "✅ Dev slot environment configured"
+    
+    # Save dev URL to config
+    python3 << EOF
+import json
+try:
+    with open('user_config.json', 'r') as f:
+        config = json.load(f)
+    config['azure_settings']['dev_slot_url'] = '$DEV_SLOT_URL'
+    with open('user_config.json', 'w') as f:
+        json.dump(config, f, indent=2)
+except Exception as e:
+    print(f"Warning: Could not save dev URL to config: {e}")
+EOF
+fi
+
+echo ""
+
+# Switch back to main branch for deployment verification
+git checkout main > /dev/null 2>&1
+
+echo "DONE:Creating dev environment" >> setup_progress.log
+
 # Step 10: Wait for GitHub Actions deployment (both frontend + backend)
 echo "PROGRESS:Deploying to Azure via GitHub Actions" >> setup_progress.log
 echo "Waiting for GitHub Actions to start deployment..."
@@ -268,4 +449,26 @@ fi
 # Kill setup server
 sleep 2
 pkill -f setup_server.py
+
+echo ""
+echo "=================================================="
+echo "  ✅ Setup Complete!"
+echo "=================================================="
+echo ""
+echo "Your Boot Lang environment is ready!"
+echo ""
+echo "📍 Access Points:"
+echo "   Backend API: http://localhost:8000"
+echo "   Frontend:    http://localhost:3000"
+if [ -n "$AZURE_STATIC_URL" ]; then
+echo "   Deployed:    $AZURE_STATIC_URL"
+fi
+echo ""
+echo "💡 Next Steps:"
+echo "   • Start backend: tell Cursor 'Start backend'"
+echo "   • Start frontend: tell Cursor 'Start frontend'"
+echo "   • Login at http://localhost:3000"
+echo "   • View System Dashboard at http://localhost:3000/dashboard"
+echo "   • Build a PRD: tell Cursor 'Help me build a PRD'"
+echo ""
 

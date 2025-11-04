@@ -117,6 +117,167 @@ async def get_config():
             "error": str(e)
         }
 
+
+# System status endpoint for admin dashboard
+@app.get("/api/system/status")
+async def get_system_status():
+    """
+    Get system status for admin dashboard.
+    
+    Returns git status, Azure URLs, database info, project info.
+    """
+    import json
+    import subprocess
+    import sqlite3
+    
+    status = {
+        "project": {},
+        "git": {},
+        "azure": {},
+        "database": {},
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    # Project info
+    try:
+        with open('user_config.json', 'r') as f:
+            config = json.load(f)
+        
+        status["project"] = {
+            "name": config.get('user_identity', {}).get('project_name', 'Unknown'),
+            "user": config.get('user_identity', {}).get('user_name', 'Unknown'),
+            "environment": os.getenv('ENVIRONMENT', 'development')
+        }
+    except:
+        status["project"] = {
+            "name": "Unknown",
+            "user": "Unknown",
+            "environment": "development"
+        }
+    
+    # Git status
+    try:
+        branch = subprocess.check_output(
+            ['git', 'branch', '--show-current'],
+            text=True,
+            stderr=subprocess.DEVNULL
+        ).strip()
+        
+        commit_hash = subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            text=True,
+            stderr=subprocess.DEVNULL
+        ).strip()
+        
+        commit_msg = subprocess.check_output(
+            ['git', 'log', '-1', '--pretty=%B'],
+            text=True,
+            stderr=subprocess.DEVNULL
+        ).strip()
+        
+        status_output = subprocess.check_output(
+            ['git', 'status', '--porcelain'],
+            text=True,
+            stderr=subprocess.DEVNULL
+        ).strip()
+        
+        has_changes = bool(status_output)
+        
+        status["git"] = {
+            "branch": branch,
+            "commit_hash": commit_hash,
+            "commit_message": commit_msg,
+            "has_uncommitted_changes": has_changes,
+            "status": "⚠️ Uncommitted changes" if has_changes else "✅ Clean"
+        }
+    except:
+        status["git"] = {
+            "branch": "unknown",
+            "commit_hash": "N/A",
+            "commit_message": "N/A",
+            "has_uncommitted_changes": False,
+            "status": "⚠️ Git info unavailable"
+        }
+    
+    # Azure info
+    try:
+        with open('user_config.json', 'r') as f:
+            config = json.load(f)
+        
+        azure = config.get('azure_settings', {})
+        app_service = azure.get('app_service_name', '')
+        static_url = azure.get('static_web_app_url', 'Not deployed yet')
+        dev_url = azure.get('dev_slot_url', 'Not created yet')
+        resource_group = azure.get('resource_group', 'N/A')
+        
+        prod_url = f"https://{app_service}.azurewebsites.net" if app_service else "Not configured"
+        
+        status["azure"] = {
+            "resource_group": resource_group,
+            "backend_prod": prod_url,
+            "backend_dev": dev_url,
+            "frontend": static_url
+        }
+    except:
+        status["azure"] = {
+            "resource_group": "N/A",
+            "backend_prod": "Not configured",
+            "backend_dev": "Not configured",
+            "frontend": "Not configured"
+        }
+    
+    # Database info
+    db_path = 'boot_lang.db'
+    
+    if not os.path.exists(db_path):
+        status["database"] = {
+            "exists": False,
+            "tables": [],
+            "total_records": 0
+        }
+    else:
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+            tables = cursor.fetchall()
+            
+            table_info = []
+            total_records = 0
+            
+            for (table_name,) in tables:
+                try:
+                    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+                    count = cursor.fetchone()[0]
+                    total_records += count
+                    table_info.append({
+                        "name": table_name,
+                        "records": count
+                    })
+                except:
+                    table_info.append({
+                        "name": table_name,
+                        "records": "Error"
+                    })
+            
+            conn.close()
+            
+            status["database"] = {
+                "exists": True,
+                "tables": table_info,
+                "total_records": total_records
+            }
+        except Exception as e:
+            status["database"] = {
+                "exists": True,
+                "tables": [],
+                "total_records": 0,
+                "error": str(e)
+            }
+    
+    return status
+
 # Login endpoint
 @app.post("/api/login", response_model=LoginResponse)
 async def login(request: LoginRequest):

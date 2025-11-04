@@ -213,26 +213,26 @@ const PRDBuilder: React.FC = () => {
 
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-full bg-white">
       {/* Left Panel (40%) */}
-      <div className="w-2/5 bg-white border-r flex flex-col">
+      <div className="w-2/5 bg-white border-r border-gray-200 flex flex-col">
         {/* Tab Switcher */}
-        <div className="flex border-b">
+        <div className="flex border-b border-gray-200">
           <button
-            className={`flex-1 py-3 px-4 font-medium ${
+            className={`flex-1 py-3 px-4 text-sm font-medium transition ${
               activeTab === 'documents'
-                ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'text-gray-900 border-b-2 border-indigo-600'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
             onClick={() => setActiveTab('documents')}
           >
             Documents
           </button>
           <button
-            className={`flex-1 py-3 px-4 font-medium ${
+            className={`flex-1 py-3 px-4 text-sm font-medium transition ${
               activeTab === 'prds'
-                ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'text-gray-900 border-b-2 border-indigo-600'
+                : 'text-gray-500 hover:text-gray-700'
             }`}
             onClick={() => setActiveTab('prds')}
           >
@@ -258,15 +258,15 @@ const PRDBuilder: React.FC = () => {
                   htmlFor="file-upload"
                   className={`block w-full p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition ${
                     uploading
-                      ? 'border-gray-300 bg-gray-50'
-                      : 'border-blue-300 hover:border-blue-500 hover:bg-blue-50'
+                      ? 'border-gray-200 bg-gray-50'
+                      : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
                   }`}
                 >
                   {uploading ? (
                     <span className="text-gray-500">Uploading...</span>
                   ) : (
                     <div>
-                      <span className="text-blue-600 font-medium">Upload Document</span>
+                      <span className="text-gray-900 font-medium">Upload Document</span>
                       <p className="text-sm text-gray-500 mt-1">PDF, TXT, MD, PNG, JPG</p>
                     </div>
                   )}
@@ -281,7 +281,7 @@ const PRDBuilder: React.FC = () => {
                   documents.map(doc => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-sm">{doc.filename}</p>
@@ -291,7 +291,7 @@ const PRDBuilder: React.FC = () => {
                       </div>
                       <button
                         onClick={() => handleDeleteDocument(doc.id)}
-                        className="ml-2 text-red-500 hover:text-red-700"
+                        className="ml-2 text-gray-400 hover:text-gray-600 text-xl"
                       >
                         ×
                       </button>
@@ -310,8 +310,8 @@ const PRDBuilder: React.FC = () => {
                     key={prd.prd_name}
                     className={`p-3 rounded-lg cursor-pointer transition ${
                       selectedPrd?.prd_name === prd.prd_name
-                        ? 'bg-blue-100 border border-blue-300'
-                        : 'bg-gray-50 hover:bg-gray-100'
+                        ? 'bg-indigo-50 border border-indigo-200'
+                        : 'border border-gray-200 hover:border-gray-300'
                     }`}
                     onClick={async () => {
                       setSelectedPrd(prd);
@@ -339,44 +339,44 @@ const PRDBuilder: React.FC = () => {
       </div>
 
       {/* Right Panel (60%) */}
-      <div className="w-3/5 flex flex-col">
+      <div className="w-3/5 flex flex-col bg-white">
         {/* Chat Header */}
-        <div className="bg-white border-b p-4">
-          <h1 className="text-xl font-bold text-gray-800">PRD Builder</h1>
-          <p className="text-sm text-gray-500">Technical Product Manager AI</p>
+        <div className="border-b border-gray-200 p-6">
+          <h1 className="text-xl font-semibold text-gray-900">PRD Builder</h1>
+          <p className="text-sm text-gray-500 mt-1">Technical Product Manager AI</p>
         </div>
 
         {/* Messages or PRD Preview */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {selectedPrd && prdContent ? (
-            <div className="bg-white rounded-lg p-6">
+            <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">{selectedPrd.feature_name}</h2>
+                <h2 className="text-lg font-semibold text-gray-900">{selectedPrd.feature_name}</h2>
                 <button
                   onClick={() => {
                     setSelectedPrd(null);
                     setPrdContent('');
                   }}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-400 hover:text-gray-600 text-xl"
                 >
-                  ✕ Close
+                  ×
                 </button>
               </div>
-              <div className="prose max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono bg-gray-50 p-4 rounded overflow-x-auto">
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono overflow-x-auto">
                   {prdContent}
                 </pre>
               </div>
-              <div className="mt-4 p-4 bg-blue-50 rounded">
+              <div className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
                 <p className="text-sm text-gray-700">
-                  <strong>To implement this PRD:</strong> Tell Cursor "Build my PRD" or "Build {selectedPrd.prd_name}"
+                  <strong>To implement:</strong> Tell Cursor "Build my PRD"
                 </p>
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center text-gray-500 mt-8">
+            <div className="text-center text-gray-400 mt-16">
               <p className="text-lg font-medium">Start a conversation</p>
-              <p className="text-sm mt-2">Tell me what you'd like to build!</p>
+              <p className="text-sm mt-2">Tell me what you'd like to build</p>
             </div>
           ) : null}
           
@@ -388,15 +388,15 @@ const PRDBuilder: React.FC = () => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[80%] rounded-lg p-4 ${
                       msg.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-800'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-900'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    <p className={`text-xs mt-2 ${
+                      msg.role === 'user' ? 'text-indigo-100' : 'text-gray-500'
                     }`}>
                       {msg.timestamp.toLocaleTimeString()}
                     </p>
@@ -408,8 +408,8 @@ const PRDBuilder: React.FC = () => {
           
           {!selectedPrd && isTyping && (
             <div className="flex justify-start">
-              <div className="bg-gray-200 rounded-lg p-3">
-                <p className="text-sm text-gray-600">Agent is typing...</p>
+              <div className="bg-gray-100 rounded-lg p-4">
+                <p className="text-sm text-gray-500">Agent is typing...</p>
               </div>
             </div>
           )}
@@ -419,21 +419,21 @@ const PRDBuilder: React.FC = () => {
 
         {/* Input Area - Hide when viewing PRD */}
         {!selectedPrd && (
-          <div className="bg-white border-t p-4">
-            <div className="flex space-x-2">
+          <div className="border-t border-gray-200 p-6">
+            <div className="flex space-x-3">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 disabled={isTyping}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={isTyping || !input.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send
               </button>

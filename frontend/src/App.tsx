@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import UserSettings from './components/UserSettings';
 import AdminPanel from './components/AdminPanel';
+import SystemDashboard from './components/SystemDashboard';
 
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -13,68 +14,101 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-// Navigation component
+// Navigation component - Left Sidebar
 const Navigation: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
+  const [collapsed, setCollapsed] = React.useState(false);
+
+  if (!isAuthenticated) return null;
 
   return (
-    <nav className="bg-blue-600 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex space-x-4">
-            <Link to="/" className="text-xl font-bold hover:text-blue-200">
-              Boot_Lang
-            </Link>
-            {isAuthenticated && (
-              <>
-                <Link to="/" className="px-3 py-2 rounded hover:bg-blue-700">
-                  POC Builder
-                </Link>
-                <Link to="/settings" className="px-3 py-2 rounded hover:bg-blue-700">
-                  Settings
-                </Link>
-                {user?.is_admin && (
-                  <Link to="/admin" className="px-3 py-2 rounded hover:bg-blue-700">
-                    Admin Panel
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <span className="text-sm">Welcome, {user?.username}</span>
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">
-                  Login
-                </Link>
-                <Link to="/register" className="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800">
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
+    <div className={`${collapsed ? 'w-16' : 'w-64'} bg-white border-r border-gray-200 flex flex-col transition-all duration-300`}>
+      {/* Logo & Collapse Button */}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
+        {!collapsed && (
+          <Link to="/" className="text-lg font-semibold text-gray-900">
+            Boot_Lang
+          </Link>
+        )}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? '→' : '←'}
+        </button>
+      </div>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 p-3 space-y-1">
+        <Link
+          to="/"
+          className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition"
+          title="PRD Builder"
+        >
+          <span className="text-lg">📝</span>
+          {!collapsed && <span className="ml-3">PRD Builder</span>}
+        </Link>
+        
+        <Link
+          to="/dashboard"
+          className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition"
+          title="System Dashboard"
+        >
+          <span className="text-lg">🎯</span>
+          {!collapsed && <span className="ml-3">Dashboard</span>}
+        </Link>
+        
+        <Link
+          to="/settings"
+          className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition"
+          title="Settings"
+        >
+          <span className="text-lg">⚙️</span>
+          {!collapsed && <span className="ml-3">Settings</span>}
+        </Link>
+        
+        {user?.is_admin && (
+          <Link
+            to="/admin"
+            className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition"
+            title="Admin Panel"
+          >
+            <span className="text-lg">👤</span>
+            {!collapsed && <span className="ml-3">Admin</span>}
+          </Link>
+        )}
+      </nav>
+
+      {/* User Info & Logout */}
+      <div className="p-3 border-t border-gray-200">
+        <div className="flex items-center justify-between px-3 py-2">
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{user?.username}</p>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition"
+            title="Logout"
+          >
+            {collapsed ? '→' : '↪'}
+          </button>
         </div>
       </div>
-    </nav>
+    </div>
   );
 };
 
 // Main App component
 const AppContent: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
+      {isAuthenticated && <Navigation />}
+      <div className="flex-1 overflow-auto">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -83,6 +117,14 @@ const AppContent: React.FC = () => {
             element={
               <ProtectedRoute>
                 <POCBuilder />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <SystemDashboard />
               </ProtectedRoute>
             }
           />

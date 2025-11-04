@@ -169,19 +169,19 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Panel</h1>
+      <div className="max-w-7xl mx-auto px-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Admin Panel</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           {/* Left Panel - 40% (2/5) - Actions */}
           <div className="md:col-span-2 space-y-6">
             {/* Add User Form */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Add New User</h2>
+            <div className="bg-white border border-gray-200 p-6 rounded-lg">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New User</h2>
               <form onSubmit={handleAddUser} className="space-y-4">
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                    Username *
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                    Username
                   </label>
                   <input
                     id="username"
@@ -191,14 +191,14 @@ const AdminPanel: React.FC = () => {
                     maxLength={50}
                     value={newUsername}
                     onChange={(e) => setNewUsername(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     placeholder="Enter username"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password *
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
                   </label>
                   <input
                     id="password"
@@ -207,34 +207,34 @@ const AdminPanel: React.FC = () => {
                     minLength={4}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     placeholder="Minimum 4 characters"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email (optional)
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
                   <input
                     id="email"
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                     placeholder="user@example.com"
                   />
                 </div>
 
-                <div className="flex items-center">
+                <div className="flex items-center pt-2">
                   <input
                     id="isAdmin"
                     type="checkbox"
                     checked={newIsAdmin}
                     onChange={(e) => setNewIsAdmin(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="isAdmin" className="ml-2 text-sm text-gray-700">
                     Grant admin privileges
                   </label>
                 </div>
@@ -242,7 +242,7 @@ const AdminPanel: React.FC = () => {
                 <button
                   type="submit"
                   disabled={addLoading}
-                  className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50"
                 >
                   {addLoading ? 'Adding...' : 'Add User'}
                 </button>
@@ -251,11 +251,11 @@ const AdminPanel: React.FC = () => {
 
             {/* Reset Password Form */}
             {resetUserId && (
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Reset Password</h2>
+              <div className="bg-white border border-gray-200 p-6 rounded-lg">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Reset Password</h2>
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div>
-                    <label htmlFor="resetPassword" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="resetPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       New Password
                     </label>
                     <input
@@ -265,16 +265,16 @@ const AdminPanel: React.FC = () => {
                       minLength={4}
                       value={resetPassword}
                       onChange={(e) => setResetPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                       placeholder="Minimum 4 characters"
                     />
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-3">
                     <button
                       type="submit"
                       disabled={resetLoading}
-                      className="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50"
                     >
                       {resetLoading ? 'Resetting...' : 'Reset Password'}
                     </button>
@@ -284,7 +284,7 @@ const AdminPanel: React.FC = () => {
                         setResetUserId(null);
                         setResetPassword('');
                       }}
-                      className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="flex-1 py-3 px-4 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg transition"
                     >
                       Cancel
                     </button>
@@ -292,41 +292,29 @@ const AdminPanel: React.FC = () => {
                 </form>
               </div>
             )}
-
-            {/* Instructions */}
-            <div className="bg-blue-50 p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">Instructions</h2>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li>• Add new users with the form above</li>
-                <li>• Check "Grant admin privileges" to create admin users</li>
-                <li>• Click "Reset Password" to change a user's password</li>
-                <li>• Click "Delete" to remove a user (cannot delete yourself)</li>
-                <li>• User list refreshes automatically after each action</li>
-              </ul>
-            </div>
           </div>
 
           {/* Right Panel - 60% (3/5) - User List */}
           <div className="md:col-span-3">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white border border-gray-200 p-6 rounded-lg">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Users</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Users</h2>
                 <button
                   onClick={loadUsers}
-                  className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-50 border border-gray-200 rounded-lg transition text-sm"
                 >
                   Refresh
                 </button>
               </div>
 
               {error && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                   {error}
                 </div>
               )}
 
               {success && (
-                <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+                <div className="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
                   {success}
                 </div>
               )}
@@ -374,11 +362,11 @@ const AdminPanel: React.FC = () => {
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm">
                             {user.is_admin ? (
-                              <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700">
                                 Admin
                               </span>
                             ) : (
-                              <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
                                 User
                               </span>
                             )}
@@ -386,16 +374,16 @@ const AdminPanel: React.FC = () => {
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                             {new Date(user.created_at).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm space-x-2">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm space-x-3">
                             <button
                               onClick={() => setResetUserId(user.id)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-indigo-600 hover:text-indigo-700 font-medium"
                             >
-                              Reset Password
+                              Reset
                             </button>
                             <button
                               onClick={() => handleDeleteUser(user.id, user.username)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-700 font-medium"
                             >
                               Delete
                             </button>

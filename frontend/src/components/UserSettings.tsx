@@ -103,29 +103,29 @@ const UserSettings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">User Settings</h1>
+      <div className="max-w-4xl mx-auto px-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Settings</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Profile Update Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Update Profile</h2>
+          <div className="bg-white border border-gray-200 p-6 rounded-lg">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
             
             {profileError && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {profileError}
               </div>
             )}
             
             {profileSuccess && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              <div className="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
                 {profileSuccess}
               </div>
             )}
 
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                   Username
                 </label>
                 <input
@@ -135,12 +135,12 @@ const UserSettings: React.FC = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   minLength={3}
                   maxLength={50}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
                 <input
@@ -148,14 +148,14 @@ const UserSettings: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={profileLoading}
-                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50"
               >
                 {profileLoading ? 'Updating...' : 'Update Profile'}
               </button>
@@ -163,24 +163,24 @@ const UserSettings: React.FC = () => {
           </div>
 
           {/* Password Change Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Change Password</h2>
+          <div className="bg-white border border-gray-200 p-6 rounded-lg">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Password</h2>
             
             {passwordError && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {passwordError}
               </div>
             )}
             
             {passwordSuccess && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              <div className="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
                 {passwordSuccess}
               </div>
             )}
 
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
-                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                   Current Password
                 </label>
                 <input
@@ -189,12 +189,12 @@ const UserSettings: React.FC = () => {
                   required
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
 
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
                   New Password
                 </label>
                 <input
@@ -204,12 +204,12 @@ const UserSettings: React.FC = () => {
                   minLength={4}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                   Confirm New Password
                 </label>
                 <input
@@ -219,14 +219,14 @@ const UserSettings: React.FC = () => {
                   minLength={4}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={passwordLoading}
-                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50"
               >
                 {passwordLoading ? 'Changing...' : 'Change Password'}
               </button>

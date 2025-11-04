@@ -3,373 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boot_Lang Configuration</title>
+    <title>Boot_Lang Setup</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-white min-h-screen">
     <div class="flex h-screen">
         <!-- Left Panel: Progress Tracking (40%) -->
-        <div class="w-2/5 bg-white p-8 shadow-lg overflow-y-auto">
-            <h1 class="text-3xl font-bold text-gray-900 mb-8">Boot_Lang Configuration</h1>
+        <div class="w-2/5 bg-gray-50 border-r border-gray-200 p-8 overflow-y-auto">
+            <div class="mb-8">
+                <h1 class="text-2xl font-semibold text-gray-900 mb-2">Setup</h1>
+                <p class="text-gray-500 text-sm">Configure your Boot_Lang environment</p>
+            </div>
             
             <!-- Progress Bar -->
             <div class="mb-8">
-                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                <div class="flex justify-between text-sm text-gray-500 mb-3">
                     <span>Progress</span>
-                    <span id="progress-text">0/10 fields complete</span>
+                    <span id="progress-text">0/8 complete</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
 
             <!-- Checklist -->
-            <div class="space-y-3">
-                <h2 class="text-xl font-semibold mb-4">Setup Checklist</h2>
+            <div class="space-y-2">
+                <h2 class="text-sm font-medium text-gray-700 mb-3">Checklist</h2>
                 
-                <div class="space-y-2">
-                    <div id="check-user_name" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>User Name</span>
+                <div class="space-y-1">
+                    <div id="check-user_name" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">User Name</span>
                     </div>
-                    <div id="check-project_name" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Project Name</span>
+                    <div id="check-project_name" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">Project Name</span>
                     </div>
-                    <div id="check-openai_api_key" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>OpenAI API Key</span>
+                    <div id="check-openai_api_key" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">OpenAI API Key</span>
                     </div>
-                    <div id="check-anthropic_api_key" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Anthropic API Key (optional)</span>
+                    <div id="check-github_repo_url" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">GitHub Repo</span>
                     </div>
-                    <div id="check-langsmith_api_key" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>LangSmith API Key (optional)</span>
+                    <div id="check-app_service_name" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">App Service</span>
                     </div>
-                    <div id="check-github_repo_url" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>GitHub Repo URL</span>
+                    <div id="check-resource_group" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">Resource Group</span>
                     </div>
-                    <div id="check-git_initialized" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Git Remote Configured</span>
-                    </div>
-                    <div id="check-app_service_name" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Azure App Service Name</span>
-                    </div>
-                    <div id="check-static_web_app_url" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Static Web App URL</span>
-                    </div>
-                    <div id="check-resource_group" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Azure Resource Group</span>
-                    </div>
-                    <div id="check-subscription_id" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Azure Subscription ID</span>
-                    </div>
-                    <div id="check-region" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Azure Region</span>
-                    </div>
-                    <div id="check-openai_model_preference" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>OpenAI Model</span>
-                    </div>
-                    <div id="check-timezone" class="flex items-center text-gray-500">
-                        <span class="mr-2">⬜</span>
-                        <span>Timezone</span>
+                    <div id="check-subscription_id" class="flex items-center p-2 rounded text-sm">
+                        <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                        <span class="text-gray-500">Subscription ID</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Right Panel: Form (60%) -->
-        <div class="w-3/5 bg-gray-50 p-8 overflow-y-auto">
-            <form id="config-form" class="space-y-8">
+        <div class="w-3/5 bg-white flex flex-col">
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 px-8 pt-6">
+                <button type="button" id="tab-identity" class="tab-button px-6 py-3 text-sm font-medium border-b-2 border-indigo-600 text-gray-900">
+                    1. Identity
+                </button>
+                <button type="button" id="tab-git" class="tab-button px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    2. Git
+                </button>
+                <button type="button" id="tab-api" class="tab-button px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    3. API Keys
+                </button>
+                <button type="button" id="tab-azure" class="tab-button px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700">
+                    4. Azure
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <form id="config-form" class="flex-1 overflow-y-auto p-8">
                 
-                <!-- Section 1: User Identity -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">User Identity</h2>
+                <!-- Tab 1: User Identity -->
+                <div id="content-identity" class="tab-content">
+                    <h2 class="text-2xl font-semibold mb-2 text-gray-900">User Identity</h2>
+                    <p class="text-gray-500 mb-6">Tell us about you and your project</p>
                     
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
                         <div>
-                            <label for="user_name" class="block text-sm font-medium text-gray-700">Your Name *</label>
+                            <label for="user_name" class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
                             <input type="text" id="user_name" name="user_name" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., Amy Lloyd">
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                   placeholder="Amy Lloyd">
                         </div>
                         
                         <div>
-                            <label for="project_name" class="block text-sm font-medium text-gray-700">Project Name *</label>
+                            <label for="project_name" class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
                             <input type="text" id="project_name" name="project_name" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., VocabularyApp">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2: Required Extensions -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">Required Cursor Extensions</h2>
-                    
-                    <p class="text-sm text-gray-600 mb-4">Install these extensions in Cursor before continuing:</p>
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                            <div class="flex items-center">
-                                <span class="mr-3 text-2xl">🔧</span>
-                                <div>
-                                    <div class="font-medium">GitHub Pull Requests and Issues</div>
-                                    <div class="text-sm text-gray-500">For Git integration</div>
-                                </div>
-                            </div>
-                            <a href="vscode:extension/GitHub.vscode-pull-request-github" 
-                               class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                                Install
-                            </a>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                            <div class="flex items-center">
-                                <span class="mr-3 text-2xl">☁️</span>
-                                <div>
-                                    <div class="font-medium">Azure Account</div>
-                                    <div class="text-sm text-gray-500">For Azure deployment</div>
-                                </div>
-                            </div>
-                            <a href="vscode:extension/ms-vscode.azure-account" 
-                               class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                                Install
-                            </a>
-                        </div>
-                        
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
-                            <div class="flex items-center">
-                                <span class="mr-3 text-2xl">📦</span>
-                                <div>
-                                    <div class="font-medium">Azure App Service</div>
-                                    <div class="text-sm text-gray-500">For app deployment</div>
-                                </div>
-                            </div>
-                            <a href="vscode:extension/ms-azuretools.vscode-azureappservice" 
-                               class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
-                                Install
-                            </a>
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                   placeholder="VocabularyApp">
                         </div>
                     </div>
                     
-                    <p class="text-xs text-gray-500 mt-4">
-                        💡 Tip: Click "Install" buttons to open Cursor's Extensions Marketplace
-                    </p>
-                </div>
-
-                <!-- Section 3: Git Configuration & Initialization -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">Git Configuration</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="github_repo_url" class="block text-sm font-medium text-gray-700">Your GitHub Repo URL *</label>
-                            <input type="url" id="github_repo_url" name="github_repo_url" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="https://github.com/yourusername/your-repo">
-                            <p class="mt-1 text-sm text-gray-500">Create an empty repo on GitHub first</p>
-                        </div>
-                        
-                        <div id="git-init-section" class="mt-4">
-                            <button type="button" id="init-git-btn" disabled
-                                    class="w-full px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                                Configure Git Remote
-                            </button>
-                            <p class="mt-2 text-sm text-gray-500">This will prepare your repo - actual push happens when you complete setup</p>
-                            
-                            <div id="git-status" class="mt-3 hidden"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 4: API Keys -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">API Keys</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="openai_api_key" class="block text-sm font-medium text-gray-700">OpenAI API Key *</label>
-                            <input type="password" id="openai_api_key" name="openai_api_key" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="sk-...">
-                            <p class="mt-1 text-sm text-blue-600">
-                                <a href="https://platform.openai.com/api-keys" target="_blank" class="hover:underline">Get your key at platform.openai.com/api-keys →</a>
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label for="anthropic_api_key" class="block text-sm font-medium text-gray-700">Anthropic API Key (optional)</label>
-                            <input type="password" id="anthropic_api_key" name="anthropic_api_key"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="sk-ant-...">
-                            <p class="mt-1 text-sm text-blue-600">
-                                <a href="https://console.anthropic.com/settings/keys" target="_blank" class="hover:underline">Get your key at console.anthropic.com/settings/keys →</a>
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label for="langsmith_api_key" class="block text-sm font-medium text-gray-700">LangSmith API Key (optional)</label>
-                            <input type="password" id="langsmith_api_key" name="langsmith_api_key"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="ls__...">
-                            <p class="mt-1 text-sm text-blue-600">
-                                <a href="https://smith.langchain.com/settings" target="_blank" class="hover:underline">Get your key at smith.langchain.com/settings →</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 5: Azure Configuration -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">Azure Configuration</h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label for="app_service_name" class="block text-sm font-medium text-gray-700">App Service Name *</label>
-                            <input type="text" id="app_service_name" name="app_service_name" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., my-app-backend">
-                        </div>
-                        
-                        <div>
-                            <label for="static_web_app_url" class="block text-sm font-medium text-gray-700">Static Web App URL</label>
-                            <input type="url" id="static_web_app_url" name="static_web_app_url"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="https://your-app.azurestaticapps.net">
-                            <p class="mt-1 text-sm text-gray-500">Leave blank if not created yet</p>
-                        </div>
-                        
-                        <div>
-                            <label for="resource_group" class="block text-sm font-medium text-gray-700">Resource Group *</label>
-                            <input type="text" id="resource_group" name="resource_group" required
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., my-app-resources">
-                        </div>
-                        
-                        <div>
-                            <label for="subscription_id" class="block text-sm font-medium text-gray-700">Subscription ID</label>
-                            <input type="text" id="subscription_id" name="subscription_id"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-                            <p class="mt-1 text-sm text-gray-500">For Azure CLI access (optional)</p>
-                        </div>
-                        
-                        <div>
-                            <label for="region" class="block text-sm font-medium text-gray-700">Region *</label>
-                            <select id="region" name="region" required
-                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="eastus2">East US 2</option>
-                                <option value="westus2">West US 2</option>
-                                <option value="centralus">Central US</option>
-                                <option value="westeurope">West Europe</option>
-                                <option value="southeastasia">Southeast Asia</option>
-                            </select>
-                        </div>
-                        
-                        <div class="bg-blue-50 p-4 rounded-md border border-blue-200">
-                            <h4 class="font-semibold text-blue-900 mb-2">Setup Azure Deployment First</h4>
-                            <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                                <li>Go to Azure Portal → App Service → Deployment Center</li>
-                                <li>Select "GitHub" as source</li>
-                                <li>Authorize and select your repo</li>
-                                <li>Choose authentication type (User-assigned identity recommended)</li>
-                                <li>Azure will auto-create GitHub Actions workflow and secrets</li>
-                            </ol>
-                            <p class="text-xs text-blue-600 mt-2">
-                                💡 This only needs to be done once. After setup, deploys happen automatically on push to main.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 6: Preferences -->
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold mb-6 text-gray-900">Preferences</h2>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="use_prd_tool" name="use_prd_tool" checked
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label for="use_prd_tool" class="ml-2 block text-sm text-gray-700">
-                                Use PRD Builder Tool (localhost:3000)
-                            </label>
-                        </div>
-                        
-                        <div class="flex items-center">
-                            <input type="checkbox" id="auto_deploy" name="auto_deploy"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
-                            <label for="auto_deploy" class="ml-2 block text-sm text-gray-700">
-                                Auto-deploy on commit (not recommended for beginners)
-                            </label>
-                        </div>
-                        
-                        <div>
-                            <label for="openai_model_preference" class="block text-sm font-medium text-gray-700">OpenAI Model</label>
-                            <select id="openai_model_preference" name="openai_model_preference"
-                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="gpt-4">GPT-4 (recommended)</option>
-                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (faster, cheaper)</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="timezone" class="block text-sm font-medium text-gray-700">Timezone</label>
-                            <select id="timezone" name="timezone"
-                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="UTC">UTC</option>
-                                <option value="America/New_York">America/New_York</option>
-                                <option value="America/Los_Angeles">America/Los_Angeles</option>
-                                <option value="Europe/London">Europe/London</option>
-                                <option value="Asia/Tokyo">Asia/Tokyo</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Messages -->
-                <div id="message-container"></div>
-
-                <!-- Buttons -->
-                <div class="flex justify-between pt-6">
-                    <button type="button" id="save-progress-btn"
-                            class="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        Save Progress
+                    <button type="button" onclick="switchTab('git')" class="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                        Next →
                     </button>
+                </div>
+
+                <!-- Tab 2: Git Configuration -->
+                <div id="content-git" class="tab-content hidden">
+                    <h2 class="text-2xl font-semibold mb-2 text-gray-900">Git Configuration</h2>
+                    <p class="text-gray-500 mb-6">Connect your GitHub repository</p>
                     
-                    <button type="submit" id="complete-setup-btn" disabled
-                            class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 opacity-50 cursor-not-allowed">
-                        Save & Complete Setup
+                    <div class="mb-6">
+                        <label for="github_repo_url" class="block text-sm font-medium text-gray-700 mb-1">GitHub Repository URL</label>
+                        <input type="url" id="github_repo_url" name="github_repo_url" required
+                               class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                               placeholder="https://github.com/username/repo">
+                        <p class="mt-2 text-xs text-gray-500">Create an empty repo on GitHub first - git setup happens automatically</p>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button type="button" onclick="switchTab('identity')" class="px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                            ← Back
+                        </button>
+                        <button type="button" onclick="switchTab('api')" class="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                            Next →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: API Keys -->
+                <div id="content-api" class="tab-content hidden">
+                    <h2 class="text-2xl font-semibold mb-2 text-gray-900">API Keys</h2>
+                    <p class="text-gray-500 mb-6">Configure AI service access</p>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label for="openai_api_key" class="block text-sm font-medium text-gray-700 mb-1">OpenAI API Key</label>
+                            <input type="password" id="openai_api_key" name="openai_api_key" required
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                   placeholder="sk-...">
+                            <p class="mt-2 text-xs text-indigo-600">
+                                <a href="https://platform.openai.com/api-keys" target="_blank" class="hover:text-indigo-700">Get API key →</a>
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label for="anthropic_api_key" class="block text-sm font-medium text-gray-700 mb-1">
+                                Anthropic API Key <span class="text-gray-400 font-normal">(optional)</span>
+                            </label>
+                            <input type="password" id="anthropic_api_key" name="anthropic_api_key"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                   placeholder="sk-ant-...">
+                        </div>
+                        
+                        <div>
+                            <label for="langsmith_api_key" class="block text-sm font-medium text-gray-700 mb-1">
+                                LangSmith API Key <span class="text-gray-400 font-normal">(optional)</span>
+                            </label>
+                            <input type="password" id="langsmith_api_key" name="langsmith_api_key"
+                                   class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                   placeholder="ls__...">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button type="button" onclick="switchTab('git')" class="px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                            ← Back
+                        </button>
+                        <button type="button" onclick="switchTab('azure')" class="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                            Next →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Azure Configuration -->
+                <div id="content-azure" class="tab-content hidden">
+                    <h2 class="text-2xl font-semibold mb-2 text-gray-900">Azure Configuration</h2>
+                    <p class="text-gray-500 mb-6">Configure deployment settings</p>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="subscription_id" class="block text-sm font-medium text-gray-700 mb-1">Subscription ID</label>
+                                <input type="text" id="subscription_id" name="subscription_id" required
+                                       pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                                       class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                       placeholder="12345678-1234...">
+                            </div>
+                            
+                            <div>
+                                <label for="resource_group" class="block text-sm font-medium text-gray-700 mb-1">Resource Group</label>
+                                <input type="text" id="resource_group" name="resource_group" required
+                                       class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                       placeholder="my-app-resources">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="app_service_name" class="block text-sm font-medium text-gray-700 mb-1">App Service Name</label>
+                                <input type="text" id="app_service_name" name="app_service_name" required
+                                       class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                                       placeholder="my-app-backend-2024">
+                            </div>
+                            
+                            <div>
+                                <label for="region" class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                                <select id="region" name="region" required
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                                    <option value="eastus2">East US 2</option>
+                                    <option value="westus2">West US 2</option>
+                                    <option value="centralus">Central US</option>
+                                    <option value="westeurope">West Europe</option>
+                                    <option value="southeastasia">Southeast Asia</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500">Resources will be created automatically during setup</p>
+                    </div>
+                    
+                    <button type="button" onclick="switchTab('api')" class="px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                        ← Back
                     </button>
                 </div>
             </form>
+
+            <!-- Messages -->
+            <div id="message-container" class="px-8"></div>
+
+            <!-- Fixed Bottom Buttons -->
+            <div class="border-t border-gray-200 p-8">
+                <div class="flex gap-3">
+                    <button type="button" id="save-progress-btn"
+                            class="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                        Save Progress
+                    </button>
+                    
+                    <button type="submit" id="complete-setup-btn" form="config-form" disabled
+                            class="flex-1 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Complete Setup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Track Git initialization status
-        let gitInitialized = false;
+        // Tab switching
+        let currentTab = 'identity';
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active state from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('border-indigo-600', 'text-gray-900');
+                btn.classList.add('text-gray-500', 'border-transparent');
+            });
+            
+            // Show selected tab
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            // Activate tab button
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.remove('text-gray-500', 'border-transparent');
+            activeBtn.classList.add('border-indigo-600', 'text-gray-900');
+            
+            currentTab = tabName;
+        }
+        
+        // Tab button click handlers
+        document.getElementById('tab-identity').addEventListener('click', () => switchTab('identity'));
+        document.getElementById('tab-git').addEventListener('click', () => switchTab('git'));
+        document.getElementById('tab-api').addEventListener('click', () => switchTab('api'));
+        document.getElementById('tab-azure').addEventListener('click', () => switchTab('azure'));
         
         // Field tracking for progress  
         const requiredFields = [
             'user_name', 'project_name', 'github_repo_url', 'openai_api_key',
-            'app_service_name', 'resource_group', 'region'
+            'app_service_name', 'resource_group', 'subscription_id', 'region'
         ];
         
         const optionalFields = [
-            'anthropic_api_key', 'langsmith_api_key',
-            'static_web_app_url', 'subscription_id', 
-            'openai_model_preference', 'timezone'
+            'anthropic_api_key', 'langsmith_api_key'
         ];
 
         // Load existing config on page load
@@ -377,22 +299,6 @@
             try {
                 const response = await fetch('/config');
                 const config = await response.json();
-                
-                // Check if git already initialized
-                if (config.git_initialized === true) {
-                    gitInitialized = true;
-                    const initBtn = document.getElementById('init-git-btn');
-                    const statusDiv = document.getElementById('git-status');
-                    initBtn.textContent = '✓ Git Initialized';
-                    initBtn.disabled = true;
-                    initBtn.classList.add('bg-green-700');
-                    statusDiv.innerHTML = `
-                        <div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded">
-                            ✓ Git remote already configured
-                        </div>
-                    `;
-                    statusDiv.classList.remove('hidden');
-                }
                 
                 // Populate form fields
                 document.getElementById('user_name').value = config.user_identity.user_name || '';
@@ -402,14 +308,9 @@
                 document.getElementById('langsmith_api_key').value = config.api_keys.langsmith_api_key || '';
                 document.getElementById('github_repo_url').value = config.git_deployment.github_repo_url || '';
                 document.getElementById('app_service_name').value = config.azure_settings.app_service_name || '';
-                document.getElementById('static_web_app_url').value = config.azure_settings.static_web_app_url || '';
                 document.getElementById('resource_group').value = config.azure_settings.resource_group || '';
                 document.getElementById('subscription_id').value = config.azure_settings.subscription_id || '';
                 document.getElementById('region').value = config.azure_settings.region || 'eastus2';
-                document.getElementById('use_prd_tool').checked = config.preferences.use_prd_tool;
-                document.getElementById('auto_deploy').checked = config.preferences.auto_deploy;
-                document.getElementById('openai_model_preference').value = config.preferences.openai_model_preference || 'gpt-4';
-                document.getElementById('timezone').value = config.preferences.timezone || 'UTC';
                 
                 // Update progress AFTER setting gitInitialized flag
                 updateProgress();
@@ -419,26 +320,17 @@
             }
         }
 
-        // Check if all required fields are filled AND git initialized
+        // Check if all required fields are filled
         function checkRequiredFields() {
             const allFilled = requiredFields.every(field => {
                 const input = document.getElementById(field);
-                if (!input) {
-                    console.log('Field not found:', field);
-                    return false;
-                }
+                if (!input) return false;
                 const value = input.value ? input.value.trim() : '';
-                if (!value) {
-                    console.log('Field empty:', field);
-                    return false;
-                }
-                return true;
+                return value !== '';
             });
             
-            console.log('All fields filled:', allFilled, 'Git initialized:', gitInitialized);
-            
             const submitBtn = document.getElementById('complete-setup-btn');
-            if (allFilled && gitInitialized) {
+            if (allFilled) {
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
@@ -446,7 +338,7 @@
                 submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
             
-            return allFilled && gitInitialized;
+            return allFilled;
         }
 
         // Update progress bar and checklist
@@ -461,89 +353,34 @@
                 if (input && input.value && input.value.trim() !== '') {
                     completed++;
                     if (checkmark) {
-                        checkmark.innerHTML = `<span class="mr-2 text-green-600">✅</span><span class="text-green-600">${checkmark.textContent.trim().substring(2)}</span>`;
+                        const label = checkmark.querySelector('span:last-child').textContent;
+                        checkmark.innerHTML = `
+                            <span class="mr-3 w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center">
+                                <span class="text-white text-xs">✓</span>
+                            </span>
+                            <span class="text-gray-900 font-medium">${label}</span>
+                        `;
+                        checkmark.classList.add('bg-indigo-50');
                     }
                 } else {
                     if (checkmark) {
-                        checkmark.innerHTML = `<span class="mr-2">⬜</span><span class="text-gray-500">${checkmark.textContent.trim().substring(2)}</span>`;
+                        const label = checkmark.querySelector('span:last-child').textContent;
+                        checkmark.innerHTML = `
+                            <span class="mr-3 w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center"></span>
+                            <span class="text-gray-500">${label}</span>
+                        `;
+                        checkmark.classList.remove('bg-indigo-50');
                     }
                 }
             });
             
-            // Update Git initialized status
-            const gitCheck = document.getElementById('check-git_initialized');
-            if (gitInitialized) {
-                gitCheck.innerHTML = `<span class="mr-2 text-green-600">✅</span><span class="text-green-600">Git Remote Configured</span>`;
-            }
-            
-            const percentage = Math.round((completed / allFields.length) * 100);
+            const percentage = Math.round((completed / requiredFields.length) * 100);
             document.getElementById('progress-bar').style.width = percentage + '%';
-            document.getElementById('progress-text').textContent = `${completed}/${allFields.length} fields complete`;
+            document.getElementById('progress-text').textContent = `${completed}/${requiredFields.length} complete`;
             
             // Check if submit button should be enabled
             checkRequiredFields();
         }
-
-        // Enable Git init button when GitHub URL is entered
-        document.getElementById('github_repo_url').addEventListener('input', (e) => {
-            const initBtn = document.getElementById('init-git-btn');
-            if (e.target.value && e.target.value.trim() !== '' && !gitInitialized) {
-                initBtn.disabled = false;
-                initBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else if (!gitInitialized) {
-                initBtn.disabled = true;
-                initBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        });
-
-        // Initialize Git button handler
-        document.getElementById('init-git-btn').addEventListener('click', async () => {
-            const repoUrl = document.getElementById('github_repo_url').value;
-            if (!repoUrl) return;
-            
-            const initBtn = document.getElementById('init-git-btn');
-            const statusDiv = document.getElementById('git-status');
-            
-            initBtn.disabled = true;
-            initBtn.textContent = 'Initializing...';
-            
-            try {
-                const response = await fetch('/init-git', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({github_repo_url: repoUrl})
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    gitInitialized = true;
-                    initBtn.textContent = '✓ Git Initialized';
-                    initBtn.classList.add('bg-green-700');
-                    statusDiv.innerHTML = `
-                        <div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded">
-                            ✓ Git remote configured<br>
-                            ✓ Files staged for commit<br>
-                            <span class="text-sm">Will push to GitHub when you complete setup</span>
-                        </div>
-                    `;
-                    statusDiv.classList.remove('hidden');
-                    updateProgress();
-                    checkRequiredFields();
-                } else {
-                    throw new Error(result.message || 'Git initialization failed');
-                }
-            } catch (error) {
-                initBtn.disabled = false;
-                initBtn.textContent = 'Configure Git Remote';
-                statusDiv.innerHTML = `
-                    <div class="p-3 bg-red-50 border border-red-200 text-red-700 rounded">
-                        Error: ${error.message}
-                    </div>
-                `;
-                statusDiv.classList.remove('hidden');
-            }
-        });
 
         // Listen for input changes
         document.querySelectorAll('input, select').forEach(input => {
@@ -555,7 +392,7 @@
         function showMessage(message, isError = false) {
             const container = document.getElementById('message-container');
             container.innerHTML = `
-                <div class="p-4 rounded-md ${isError ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'}">
+                <div class="p-4 rounded-lg text-sm ${isError ? 'bg-red-50 border border-red-200 text-red-600' : 'bg-green-50 border border-green-200 text-green-600'}">
                     ${message}
                 </div>
             `;
@@ -571,14 +408,9 @@
                 langsmith_api_key: document.getElementById('langsmith_api_key').value || '',
                 github_repo_url: document.getElementById('github_repo_url').value || '',
                 app_service_name: document.getElementById('app_service_name').value || '',
-                static_web_app_url: document.getElementById('static_web_app_url').value || '',
                 resource_group: document.getElementById('resource_group').value || '',
                 subscription_id: document.getElementById('subscription_id').value || '',
-                region: document.getElementById('region').value || 'eastus2',
-                use_prd_tool: document.getElementById('use_prd_tool').checked,
-                auto_deploy: document.getElementById('auto_deploy').checked,
-                openai_model_preference: document.getElementById('openai_model_preference').value || 'gpt-4',
-                timezone: document.getElementById('timezone').value || 'UTC'
+                region: document.getElementById('region').value || 'eastus2'
             };
 
             try {
@@ -610,14 +442,9 @@
                 langsmith_api_key: document.getElementById('langsmith_api_key').value || '',
                 github_repo_url: document.getElementById('github_repo_url').value || '',
                 app_service_name: document.getElementById('app_service_name').value || '',
-                static_web_app_url: document.getElementById('static_web_app_url').value || '',
                 resource_group: document.getElementById('resource_group').value || '',
                 subscription_id: document.getElementById('subscription_id').value || '',
-                region: document.getElementById('region').value || 'eastus2',
-                use_prd_tool: document.getElementById('use_prd_tool').checked,
-                auto_deploy: document.getElementById('auto_deploy').checked,
-                openai_model_preference: document.getElementById('openai_model_preference').value || 'gpt-4',
-                timezone: document.getElementById('timezone').value || 'UTC'
+                region: document.getElementById('region').value || 'eastus2'
             };
 
             // Debug: log what we're sending
