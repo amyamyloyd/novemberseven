@@ -7,6 +7,7 @@ Uses Python's built-in http.server - no external dependencies needed.
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import os
+import re
 import urllib.parse
 
 class SetupHandler(BaseHTTPRequestHandler):
@@ -143,11 +144,11 @@ class SetupHandler(BaseHTTPRequestHandler):
                         "langsmith_api_key": data.get("langsmith_api_key", "")
                     },
                     "azure_settings": {
-                        "app_service_name": data.get("app_service_name", ""),
-                        "static_web_app_url": data.get("static_web_app_url", ""),
-                        "resource_group": data.get("resource_group", ""),
+                        "app_service_name": "",
+                        "static_web_app_url": "",
+                        "resource_group": "",
                         "subscription_id": data.get("subscription_id", ""),
-                        "region": data.get("region", "eastus2")
+                        "region": "eastus2"
                     },
                     "git_deployment": {
                         "github_repo_url": data.get("github_repo_url", ""),
@@ -240,7 +241,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                 print("Received data:", json.dumps(data, indent=2))
                 
                 # Validate required fields
-                required = ['user_name', 'project_name', 'openai_api_key', 'github_repo_url', 'app_service_name', 'resource_group']
+                required = ['user_name', 'project_name', 'openai_api_key', 'github_repo_url', 'subscription_id']
                 missing = [f for f in required if not data.get(f) or not str(data.get(f)).strip()]
                 
                 print(f"Missing fields: {missing}")
@@ -254,13 +255,20 @@ class SetupHandler(BaseHTTPRequestHandler):
                     }).encode())
                     return
                 
+                # Auto-generate Azure resource names from project name
+                project_name = data.get("project_name")
+                
+                # Sanitize project name for Azure (lowercase, hyphens only, no spaces)
+                sanitized_name = re.sub(r'[^a-z0-9-]', '', project_name.lower().replace(' ', '-'))
+                sanitized_name = re.sub(r'-+', '-', sanitized_name).strip('-')
+                
                 # Save complete config
                 config_dict = {
                     "setup_complete": True,
                     "git_initialized": True,
                     "user_identity": {
                         "user_name": data.get("user_name"),
-                        "project_name": data.get("project_name")
+                        "project_name": project_name
                     },
                     "api_keys": {
                         "openai_api_key": data.get("openai_api_key"),
@@ -268,11 +276,11 @@ class SetupHandler(BaseHTTPRequestHandler):
                         "langsmith_api_key": data.get("langsmith_api_key", "")
                     },
                     "azure_settings": {
-                        "app_service_name": data.get("app_service_name"),
-                        "static_web_app_url": data.get("static_web_app_url", ""),
-                        "resource_group": data.get("resource_group"),
+                        "app_service_name": f"{sanitized_name}-backend",
+                        "static_web_app_url": "",  # Will be set after deployment
+                        "resource_group": f"{sanitized_name}-rg",
                         "subscription_id": data.get("subscription_id", ""),
-                        "region": data.get("region", "eastus2")
+                        "region": "eastus2"  # Fixed default
                     },
                     "git_deployment": {
                         "github_repo_url": data.get("github_repo_url"),
