@@ -25,15 +25,15 @@ const Welcome: React.FC<WelcomeProps> = ({ userName, projectName, githubUrl }) =
           <span className={`${envColor} border px-4 py-2 rounded-full font-medium text-sm`}>
             {envIcon} {environment}
           </span>
-        </div>
-        
+          </div>
+          
         <div className="text-center mb-12">
           <h1 className="text-4xl font-semibold text-gray-900 mb-3">
             Setup Complete
           </h1>
           <p className="text-gray-500">Your Boot_Lang environment is ready</p>
-        </div>
-        
+          </div>
+          
         <div className="space-y-4 mb-8">
           {/* Configuration */}
           <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg">

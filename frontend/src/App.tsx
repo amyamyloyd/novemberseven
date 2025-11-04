@@ -11,6 +11,14 @@ import SystemDashboard from './components/SystemDashboard';
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  
+  // Skip authentication on localhost for development
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  if (isLocalhost) {
+    return <>{children}</>;
+  }
+  
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
@@ -48,7 +56,7 @@ const Navigation: React.FC = () => {
         >
           <span className="text-lg">📝</span>
           {!collapsed && <span className="ml-3">PRD Builder</span>}
-        </Link>
+            </Link>
         
         <Link
           to="/dashboard"
@@ -57,7 +65,7 @@ const Navigation: React.FC = () => {
         >
           <span className="text-lg">🎯</span>
           {!collapsed && <span className="ml-3">Dashboard</span>}
-        </Link>
+                </Link>
         
         <Link
           to="/settings"
@@ -66,9 +74,9 @@ const Navigation: React.FC = () => {
         >
           <span className="text-lg">⚙️</span>
           {!collapsed && <span className="ml-3">Settings</span>}
-        </Link>
+                </Link>
         
-        {user?.is_admin && (
+                {user?.is_admin && (
           <Link
             to="/admin"
             className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition"
@@ -76,8 +84,8 @@ const Navigation: React.FC = () => {
           >
             <span className="text-lg">👤</span>
             {!collapsed && <span className="ml-3">Admin</span>}
-          </Link>
-        )}
+                  </Link>
+                )}
       </nav>
 
       {/* User Info & Logout */}
@@ -85,29 +93,33 @@ const Navigation: React.FC = () => {
         <div className="flex items-center justify-between px-3 py-2">
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.username}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{user?.username || 'Developer'}</p>
+              <p className="text-xs text-gray-500">Local Mode</p>
             </div>
           )}
-          <button
-            onClick={logout}
-            className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition"
-            title="Logout"
-          >
-            {collapsed ? '→' : '↪'}
-          </button>
+          {user && (
+                <button
+                  onClick={logout}
+              className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg transition"
+              title="Logout"
+                >
+              {collapsed ? '→' : '↪'}
+                </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 
 // Main App component
 const AppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
-      {isAuthenticated && <Navigation />}
+      {(isAuthenticated || isLocalhost) && <Navigation />}
       <div className="flex-1 overflow-auto">
         <Routes>
           <Route path="/login" element={<Login />} />

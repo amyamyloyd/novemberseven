@@ -557,7 +557,7 @@ Keep questions brief. Move quickly through stages. Don't repeat questions about 
             return "ready_to_generate"
         
         # Otherwise continue gathering
-        return "continue_chat"
+            return "continue_chat"
     
     def save_conversation(self) -> Dict[str, Any]:
         """

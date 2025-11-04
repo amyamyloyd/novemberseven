@@ -80,76 +80,76 @@ const Register: React.FC = () => {
             </div>
           )}
 
-          <div>
+            <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              required
-              minLength={3}
-              maxLength={50}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              </label>
+              <input
+                id="username"
+                type="text"
+                required
+                minLength={3}
+                maxLength={50}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
               placeholder="Choose a username"
-            />
-          </div>
+              />
+            </div>
 
-          <div>
+            <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-              placeholder="your@email.com"
-            />
-          </div>
+                placeholder="your@email.com"
+              />
+            </div>
 
-          <div>
+            <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={4}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={4}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-              placeholder="Minimum 4 characters"
-            />
-          </div>
+                placeholder="Minimum 4 characters"
+              />
+            </div>
 
-          <div>
+            <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
               Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              required
-              minLength={4}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                required
+                minLength={4}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-              placeholder="Re-enter your password"
-            />
+                placeholder="Re-enter your password"
+              />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
+            <button
+              type="submit"
+              disabled={loading}
             className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
+            >
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
         </form>
       </div>
     </div>

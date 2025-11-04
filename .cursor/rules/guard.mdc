@@ -17,6 +17,13 @@ The PRDs are fed to you in order and are part of a larger architectural design. 
 Testing
 - when a test fail report the test failure if the script is running properly - DO NOT change the test to get a successful result.  If a test fails we need to fix the code and rerun the test.
 
+If the user says “run the welcome script” (or similar phrasing), you MUST initiate the onboarding/setup process by:
+Starting the local setup server that serves the setup/configuration page (typically at http://localhost:8080).
+Instructing the user to fill out the configuration form in their browser.
+After form submission, running the automation script (automation.sh) to complete environment setup.
+Upon successful setup, ensure the user sees the Welcome/confirmation screen and clear next steps.
+Always recognize “run the welcome script” as the trigger for the complete onboarding sequence, no matter the system state.
+
 the .env exists and includes the following keys
 
 # Environment Configuration

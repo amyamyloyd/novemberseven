@@ -382,27 +382,27 @@ const PRDBuilder: React.FC = () => {
           
           {!selectedPrd && messages.length > 0 && (
             <>
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
                     className={`max-w-[80%] rounded-lg p-4 ${
-                      msg.role === 'user'
+                  msg.role === 'user'
                         ? 'bg-indigo-600 text-white'
                         : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
+                }`}
+              >
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                     <p className={`text-xs mt-2 ${
                       msg.role === 'user' ? 'text-indigo-100' : 'text-gray-500'
-                    }`}>
-                      {msg.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                }`}>
+                  {msg.timestamp.toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+          ))}
             </>
           )}
           
@@ -421,24 +421,24 @@ const PRDBuilder: React.FC = () => {
         {!selectedPrd && (
           <div className="border-t border-gray-200 p-6">
             <div className="flex space-x-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Type your message..."
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              placeholder="Type your message..."
                 className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                disabled={isTyping}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={isTyping || !input.trim()}
+              disabled={isTyping}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={isTyping || !input.trim()}
                 className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Send
-              </button>
-            </div>
+            >
+              Send
+            </button>
           </div>
+        </div>
         )}
       </div>
     </div>
