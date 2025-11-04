@@ -97,7 +97,7 @@ const Welcome: React.FC<WelcomeProps> = ({ userName, projectName, githubUrl }) =
         </div>
         
         <div className="text-center text-gray-400 text-sm">
-          Boot_Lang v1.0 · Powered by Cursor AI
+          SaltAIr v1.0 · Powered by Cursor AI
         </div>
       </div>
     </div>

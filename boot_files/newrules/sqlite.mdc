@@ -1,0 +1,230 @@
+---
+alwaysApply: false
+---
+fileType: python
+name: sqlite.mdc
+description: SQLite database patterns using SQLAlchemy ORM
+---
+
+# 🗄️ SQLite Database Patterns
+
+You are adding database models and queries. Boot_Lang uses SQLite with SQLAlchemy ORM. Follow these patterns exactly.
+
+---
+
+## Define New Models
+
+### Add to database.py
+```python
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
+from datetime import datetime
+
+class TaskModel(Base):
+    """
+    Task model for user to-do items.
+    
+    Attributes:
+        id: Primary key
+        user_id: Foreign key to User
+        title: Task title
+        description: Task description
+        status: Task status (pending, completed)
+        created_at: Creation timestamp
+    """
+    __tablename__ = "tasks"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, index=True)  # FK to users.id
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(20), default="pending", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    def __repr__(self):
+        return f"<TaskModel(id={self.id}, title='{self.title}', user_id={self.user_id})>"
+```
+
+### Run Migrations
+```bash
+python3 database.py
+```
+This creates all new tables. Safe to run multiple times.
+
+---
+
+## CRUD Operations
+
+### Import Database Dependencies
+```python
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database import get_db, User, TaskModel
+from auth import get_current_user
+```
+
+### Create
+```python
+@router.post("/tasks")
+async def create_task(
+    title: str,
+    description: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create new task for current user."""
+    new_task = TaskModel(
+        user_id=current_user.id,
+        title=title,
+        description=description,
+        status="pending"
+    )
+    
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)  # Get generated ID
+    
+    return {"task": new_task}
+```
+
+### Read (List)
+```python
+@router.get("/tasks")
+async def list_tasks(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all tasks for current user."""
+    tasks = db.query(TaskModel).filter(
+        TaskModel.user_id == current_user.id
+    ).order_by(TaskModel.created_at.desc()).all()
+    
+    return {"tasks": tasks}
+```
+
+### Read (Single)
+```python
+@router.get("/tasks/{task_id}")
+async def get_task(
+    task_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get single task by ID."""
+    task = db.query(TaskModel).filter(
+        TaskModel.id == task_id,
+        TaskModel.user_id == current_user.id
+    ).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    return {"task": task}
+```
+
+### Update
+```python
+@router.put("/tasks/{task_id}")
+async def update_task(
+    task_id: int,
+    title: str,
+    description: str,
+    status: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update task (owner only)."""
+    task = db.query(TaskModel).filter(
+        TaskModel.id == task_id,
+        TaskModel.user_id == current_user.id
+    ).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task.title = title
+    task.description = description
+    task.status = status
+    
+    db.commit()
+    db.refresh(task)
+    
+    return {"task": task}
+```
+
+### Delete
+```python
+@router.delete("/tasks/{task_id}")
+async def delete_task(
+    task_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete task (owner only)."""
+    task = db.query(TaskModel).filter(
+        TaskModel.id == task_id,
+        TaskModel.user_id == current_user.id
+    ).first()
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    db.delete(task)
+    db.commit()
+    
+    return {"success": True, "message": "Task deleted"}
+```
+
+---
+
+## Key Rules
+
+1. **Always add index** on foreign keys (user_id)
+2. **Always use `get_db()` dependency** in routes
+3. **Always filter by `user_id`** for user-owned resources
+4. **Always commit after add/update/delete**
+5. **Always refresh after commit** if you need updated data
+6. **Never expose raw SQLAlchemy errors** - catch and raise HTTPException
+7. **Never delete the boot_lang.db file** - migrations are additive
+
+---
+
+## Common Patterns
+
+### Foreign Keys to User
+```python
+user_id = Column(Integer, nullable=False, index=True)
+```
+
+### Timestamps
+```python
+created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+```
+
+### Filtering + Pagination
+```python
+from typing import Optional
+
+@router.get("/tasks")
+async def list_tasks(
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(TaskModel).filter(TaskModel.user_id == current_user.id)
+    
+    if status:
+        query = query.filter(TaskModel.status == status)
+    
+    tasks = query.offset(skip).limit(limit).all()
+    return {"tasks": tasks}
+```
+
+### JSON Columns
+```python
+from sqlalchemy import JSON
+
+metadata = Column(JSON, nullable=True)  # Store dicts/lists
+```

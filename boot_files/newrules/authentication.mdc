@@ -1,0 +1,145 @@
+---
+alwaysApply: false
+---
+fileType: any
+name: authentication.mdc
+description: Authentication patterns for protected endpoints and user management
+---
+
+# 🔐 Authentication Patterns
+
+You are adding authentication to new endpoints and pages. Boot_Lang provides pre-built JWT authentication. Follow these patterns exactly.
+
+---
+
+## Backend: Protected Endpoints
+
+### Import Base Auth
+```python
+from fastapi import APIRouter, Depends
+from database import get_db, User
+from auth import get_current_user
+from sqlalchemy.orm import Session
+```
+
+### Protect Any Endpoint
+```python
+router = APIRouter(prefix="/api/items")
+
+@router.get("/my-items")
+async def get_user_items(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Fetch items for authenticated user only."""
+    items = db.query(ItemModel).filter(ItemModel.user_id == current_user.id).all()
+    return {"items": items}
+```
+
+### Admin-Only Endpoints
+```python
+from fastapi import HTTPException, status
+
+@router.delete("/items/{item_id}")
+async def delete_item(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Admin-only deletion."""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    # Delete logic here
+```
+
+---
+
+## Frontend: Protected Pages
+
+### Use AuthContext
+All auth state is in `AuthContext`. Import and use:
+
+```tsx
+import { useAuth } from '../contexts/AuthContext';
+
+const MyComponent: React.FC = () => {
+  const { user, token, loading, logout } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please log in</div>;
+  
+  return <div>Welcome, {user.username}!</div>;
+};
+```
+
+### Protect Routes
+```tsx
+import { useAuth } from '../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
+
+const ProtectedPage: React.FC = () => {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  
+  return <div>Protected content</div>;
+};
+```
+
+### Make Authenticated API Calls
+```tsx
+import { getAuthToken } from '../utils/auth';
+
+const fetchData = async () => {
+  const token = getAuthToken();
+  
+  const response = await fetch('/api/items/my-items', {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  
+  return response.json();
+};
+```
+
+---
+
+## Key Rules
+
+1. **Never skip auth** on endpoints that access user data
+2. **Always check `current_user.id`** matches resource owner
+3. **Never expose password_hash** in API responses
+4. **Use `Depends(get_current_user)`** for all protected routes
+5. **Store tokens in localStorage** (already handled by auth.ts)
+6. **Check `is_admin`** for admin-only operations
+
+---
+
+## Common Patterns
+
+### User-Owned Resources
+```python
+# Verify ownership before update/delete
+resource = db.query(ResourceModel).filter(ResourceModel.id == resource_id).first()
+if not resource or resource.user_id != current_user.id:
+    raise HTTPException(status_code=404, detail="Not found")
+```
+
+### Optional Auth (Public + Enhanced for Logged-In)
+```python
+from typing import Optional
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Optional[User]:
+    if not credentials:
+        return None
+    # ... validate token
+```

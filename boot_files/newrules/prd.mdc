@@ -1,0 +1,267 @@
+---
+alwaysApply: false
+---
+fileType: markdown
+name: prd.mdc
+description: Product Requirements Document (PRD) creation and validation
+---
+
+# 📋 PRD Creation & Implementation
+
+You are helping a user build a Product Requirements Document (PRD). PRDs define features that Cursor will implement using Boot_Lang scaffolding.
+
+---
+
+## PRD Structure
+
+### Required Sections
+
+```markdown
+# [Feature Name]
+
+## Overview
+Brief description of the feature (2-3 sentences).
+
+## Goals
+- Goal 1: What user can achieve
+- Goal 2: Success metric
+
+## User Stories
+- As a [role], I want to [action] so that [benefit]
+- As a [role], I want to [action] so that [benefit]
+
+## Features & Requirements
+
+### Feature 1: [Name]
+**Description**: What it does
+**Requirements**:
+- Requirement 1
+- Requirement 2
+
+### Feature 2: [Name]
+**Description**: What it does
+**Requirements**:
+- Requirement 1
+- Requirement 2
+
+## Data Model
+**Tables/Models Needed**:
+- `TaskModel`: user_id, title, description, status, created_at
+- `CategoryModel`: name, color, user_id
+
+## API Endpoints
+- `POST /api/tasks` - Create task
+- `GET /api/tasks` - List user's tasks
+- `PUT /api/tasks/{id}` - Update task
+- `DELETE /api/tasks/{id}` - Delete task
+
+## UI/UX
+**Pages**:
+- Dashboard - List all tasks
+- Task Form - Create/edit task
+- Settings - User preferences
+
+**Key Components**:
+- TaskList - Display tasks
+- TaskForm - Create/edit form
+- TaskCard - Single task display
+
+## Technical Notes
+- Use SQLite for storage
+- Require authentication for all endpoints
+- Real-time updates optional
+
+## Out of Scope
+- Mobile app
+- Third-party integrations
+- Notifications
+
+## Success Criteria
+- [ ] User can create tasks
+- [ ] User can view all tasks
+- [ ] User can edit tasks
+- [ ] User can delete tasks
+- [ ] Tasks persist in database
+```
+
+---
+
+## Questions to Ask User
+
+### 1. Feature Scope
+- What is the core feature?
+- Who is the primary user?
+- What problem does this solve?
+
+### 2. Data Requirements
+- What data needs to be stored?
+- Who owns the data (per-user or global)?
+- Any relationships between data?
+
+### 3. UI Requirements
+- What pages are needed?
+- What's the main user flow?
+- Any specific design requirements?
+
+### 4. Technical Requirements
+- Authentication required? (default: yes)
+- Admin features needed?
+- Any external APIs?
+- Real-time updates needed?
+
+### 5. Scope Boundaries
+- What is NOT included?
+- Any features for future phases?
+
+---
+
+## PRD Validation Checklist
+
+Before saving PRD, verify:
+
+- [ ] Feature name is clear and specific
+- [ ] Goals are measurable
+- [ ] User stories follow "As a [role], I want [action] so that [benefit]"
+- [ ] Data model lists all tables/fields
+- [ ] API endpoints defined (method + path)
+- [ ] UI pages and components listed
+- [ ] Authentication requirements stated
+- [ ] Out of scope section included
+- [ ] Success criteria are testable
+
+---
+
+## Saving PRDs
+
+### File Location
+```
+/prd/[feature-name]-prd.md
+```
+
+Example: `/prd/task-management-prd.md`
+
+### Naming Convention
+- Lowercase with hyphens
+- Descriptive feature name
+- Always ends with `-prd.md`
+
+### Commit Message
+```
+docs: Add PRD for [feature name]
+```
+
+---
+
+## Implementation Process
+
+### 1. Create PRD
+User works with Cursor to define requirements → PRD saved to `/prd/`
+
+### 2. Review PRD
+User reviews PRD, confirms scope, makes edits if needed
+
+### 3. Build from PRD
+User tells Cursor: "Build my latest PRD" or "Build /prd/task-management-prd.md"
+
+### 4. Cursor Implements
+Cursor reads PRD and:
+- Creates database models (sqlite.mdc)
+- Creates API endpoints (authentication.mdc)
+- Creates React components (react.mdc)
+- Tests locally
+- Commits code (git.mdc)
+
+### 5. Deploy
+User tells Cursor: "Deploy to Azure" → Git push triggers deployment
+
+---
+
+## Example PRD (Minimal)
+
+```markdown
+# Simple Expense Tracker
+
+## Overview
+Users can track personal expenses with categories and dates.
+
+## Goals
+- Help users monitor spending
+- Categorize expenses
+- View spending history
+
+## User Stories
+- As a user, I want to add expenses so that I can track my spending
+- As a user, I want to categorize expenses so that I can see spending by category
+- As a user, I want to view my expense history so that I can review past transactions
+
+## Data Model
+- `ExpenseModel`: user_id, amount, category, description, date, created_at
+
+## API Endpoints
+- `POST /api/expenses` - Create expense
+- `GET /api/expenses` - List expenses (with filtering)
+- `DELETE /api/expenses/{id}` - Delete expense
+
+## UI/UX
+**Pages**:
+- Dashboard - List expenses + add form
+- Summary - View spending by category
+
+**Components**:
+- ExpenseForm - Add expense
+- ExpenseList - Display expenses
+- CategorySummary - Group by category
+
+## Technical Notes
+- All endpoints require authentication
+- Filter by date range and category
+- Store amounts as decimals
+
+## Out of Scope
+- Recurring expenses
+- Budget tracking
+- Export to CSV
+
+## Success Criteria
+- [ ] User can add expense
+- [ ] User can view all expenses
+- [ ] User can delete expense
+- [ ] Expenses grouped by category
+```
+
+---
+
+## Key Rules
+
+1. **Keep PRDs focused** - One feature at a time
+2. **Be specific** - Vague requirements lead to wrong implementation
+3. **Define data model** - Critical for database setup
+4. **List all endpoints** - Backend needs clear API definition
+5. **Name UI components** - Frontend needs component list
+6. **Set boundaries** - Out of scope prevents feature creep
+7. **Make success criteria testable** - Clear done definition
+
+---
+
+## PRD Templates by Type
+
+### CRUD Application
+- Overview, Goals, User Stories
+- Data Model (1-3 tables)
+- API Endpoints (CRUD operations)
+- UI Pages (List, Form, Detail)
+- Authentication (default: yes)
+
+### Dashboard/Analytics
+- Overview, Goals, User Stories
+- Data Sources (existing tables or new)
+- Aggregations/Calculations needed
+- Visualizations (charts, tables)
+- Filters/Date ranges
+
+### Integration/API Feature
+- Overview, Goals
+- External API details
+- Data transformation needed
+- Error handling
+- Rate limits/quotas

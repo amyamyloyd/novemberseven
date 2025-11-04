@@ -27,7 +27,7 @@ const Navigation: React.FC = () => {
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
         {!collapsed && (
           <Link to="/" className="text-lg font-semibold text-gray-900">
-            Boot_Lang
+            SaltAIr
           </Link>
         )}
         <button

@@ -50,7 +50,7 @@ const Login: React.FC = () => {
             Welcome back
           </h1>
           <p className="text-gray-500">
-            New to Boot_Lang?{' '}
+            New to SaltAIr?{' '}
             <Link to="/register" className="text-indigo-600 hover:text-indigo-500 font-medium">
               Create an account
             </Link>
