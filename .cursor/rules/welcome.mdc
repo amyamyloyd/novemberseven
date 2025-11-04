@@ -1,3 +1,90 @@
 ---
 alwaysApply: true
 ---
+# Welcome Script Rules - SaltAIr Onboarding
+
+## When User Says "Run the Welcome Script" or "Run welcome.bat"
+
+### Step 1: Check Python Installation
+
+**ALWAYS check if Python 3.11+ is installed BEFORE running the script:**
+
+```bash
+python --version
+```
+
+**If Python is NOT installed or not in PATH:**
+
+1. **Install Python using Windows Package Manager:**
+   ```powershell
+   winget install -e --id Python.Python.3.12
+   ```
+   
+2. **Wait for installation to complete** (monitor output or wait 30-60 seconds)
+
+3. **Verify installation:**
+   ```bash
+   python --version
+   ```
+   Must show Python 3.11.x or 3.12.x
+
+4. **If verification fails:**
+   - Check if Python was added to PATH
+   - May require restarting terminal/Cursor
+   - If still failing, manually guide user to python.org/downloads
+
+### Step 2: Run welcome.bat
+
+**Once Python is confirmed installed:**
+
+```bash
+cd boot_lang
+.\docs\welcome.bat
+```
+
+**OR if in root directory:**
+
+```bash
+.\welcome.bat
+```
+
+**Expected behavior:**
+- Script checks if setup server is running on port 8001
+- If not running, starts `python setup_server.py` in background
+- Opens browser to http://localhost:8001/setup
+- If already running, just opens browser
+
+### Step 3: Monitor for Errors
+
+**If script fails with "Python not found":**
+- Go back to Step 1 and install Python
+
+**If script fails with port conflict:**
+- Check what's using port 8001: `netstat -ano | findstr ":8001"`
+- Kill the process or use different port
+
+**If browser doesn't open:**
+- Tell user to manually visit: http://localhost:8001/setup
+
+### Step 4: Next Steps After Setup Form
+
+**After user submits the setup form:**
+- The form triggers `automation.sh` automatically
+- Monitor for completion (15-20 minutes)
+- User will see Welcome screen when done
+
+## Important Notes
+
+- **DO NOT** skip the Python check - it will always fail without it
+- **DO NOT** assume Python is installed on fresh Windows machines
+- **ALWAYS** verify Python version after installation
+- The script handles server startup automatically - don't manually start `setup_server.py` unless the script fails
+
+## Alternative Commands User Might Use
+
+- "run welcome script" → Run welcome.bat
+- "start setup" → Run welcome.bat  
+- "open setup form" → Run welcome.bat
+- "run the welcome script" → Run welcome.bat
+
+All of these should trigger the same flow: Check Python → Install if needed → Run welcome.bat
