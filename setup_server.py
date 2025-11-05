@@ -38,19 +38,33 @@ class SetupHandler(BaseHTTPRequestHandler):
                 progress = []
                 complete_url = ""
                 error_message = ""
+                download_progress = {}
                 
                 for line in lines:
                     line = line.strip()
                     if line.startswith('PROGRESS:'):
                         task = line.replace('PROGRESS:', '')
-                        progress.append({"task": task, "status": "running"})
+                        progress.append({"task": task, "status": "running", "progress": 0})
                     elif line.startswith('DONE:'):
                         task = line.replace('DONE:', '')
                         # Update matching task to done
                         for p in progress:
                             if p["task"] == task:
                                 p["status"] = "done"
+                                p["progress"] = 100
                                 break
+                    elif line.startswith('DOWNLOAD_PROGRESS:'):
+                        # Format: DOWNLOAD_PROGRESS:Tool Name:75
+                        parts = line.replace('DOWNLOAD_PROGRESS:', '').split(':')
+                        if len(parts) >= 2:
+                            tool_name = parts[0]
+                            percent = int(parts[1])
+                            download_progress[tool_name] = percent
+                            # Update progress for matching task
+                            for p in progress:
+                                if tool_name in p["task"]:
+                                    p["progress"] = percent
+                                    break
                     elif line.startswith('COMPLETE:'):
                         complete_url = line.replace('COMPLETE:', '')
                     elif line.startswith('ERROR:'):
@@ -82,6 +96,23 @@ class SetupHandler(BaseHTTPRequestHandler):
                     "github_actions_url": ""
                 }).encode())
                 
+        elif self.path == '/log_stream':
+            # Live log streaming page
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            html = '''<!DOCTYPE html><html><head><title>Live Setup Log</title><style>body{margin:0;padding:20px;background:#1e1e1e;color:#d4d4d4;font-family:Consolas,Monaco,monospace;font-size:14px}#log{white-space:pre-wrap;word-wrap:break-word;line-height:1.4}.header{position:sticky;top:0;background:#1e1e1e;padding:10px 0;border-bottom:2px solid #007acc;margin-bottom:10px}.auto-scroll{float:right}</style></head><body><div class="header"><strong>📄 Live Setup Log</strong><label class="auto-scroll"><input type="checkbox" id="autoScroll" checked> Auto-scroll</label></div><div id="log"></div><script>const logDiv=document.getElementById('log');const autoScrollCheckbox=document.getElementById('autoScroll');let lastSize=0;async function fetchLog(){try{const response=await fetch('/log_content');const text=await response.text();if(text.length!==lastSize){logDiv.textContent=text;lastSize=text.length;if(autoScrollCheckbox.checked){window.scrollTo(0,document.body.scrollHeight);}}}catch(error){console.error('Error fetching log:',error);}}setInterval(fetchLog,500);fetchLog();</script></body></html>'''
+            self.wfile.write(html.encode())
+        elif self.path == '/log_content':
+            # Serve raw log content
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            if os.path.exists('setup_progress.log'):
+                with open('setup_progress.log', 'r', encoding='utf-8', errors='replace') as f:
+                    self.wfile.write(f.read().encode('utf-8', errors='replace'))
+            else:
+                self.wfile.write(b'No log file yet...')
         elif self.path == '/config':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')

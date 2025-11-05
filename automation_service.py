@@ -133,10 +133,22 @@ class AutomationService:
                 encoding='utf-8'
             )
             
-            # Stream output
+            # Stream output and parse progress
+            import re
             for line in process.stdout:
-                print(f"   {line.rstrip()}")
-                self._log_progress(line.rstrip())
+                clean_line = line.rstrip()
+                print(f"   {clean_line}")
+                self._log_progress(clean_line)
+                
+                # Parse download progress for progress bar (e.g., "15.3 MB / 64.3 MB")
+                if 'MB' in clean_line and '/' in clean_line:
+                    match = re.search(r'([\d.]+)\s*MB\s*/\s*([\d.]+)\s*MB', clean_line)
+                    if match:
+                        current_mb = float(match.group(1))
+                        total_mb = float(match.group(2))
+                        if total_mb > 0:
+                            percent = int((current_mb / total_mb) * 100)
+                            self._log_progress(f"DOWNLOAD_PROGRESS:{tool_name}:{percent}")
             
             # Wait with timeout
             try:
@@ -205,6 +217,37 @@ class AutomationService:
                 return False
         else:
             print("[OK] GitHub CLI already installed")
+        
+        # Install Azure CLI (system-level)
+        az_installed = shutil.which('az') is not None
+        
+        if not az_installed:
+            print("Azure CLI not found, installing...")
+            
+            if self.is_windows:
+                # Windows: use winget
+                az_success = self._install_cli_tool(
+                    "Azure CLI",
+                    ['winget', 'install', '-e', '--id', 'Microsoft.AzureCLI', '--accept-source-agreements', '--accept-package-agreements']
+                )
+            else:
+                # Mac: use brew
+                az_success = self._install_cli_tool(
+                    "Azure CLI",
+                    ['brew', 'install', 'azure-cli']
+                )
+            
+            if not az_success:
+                print("")
+                print("[ERROR] Azure CLI installation failed")
+                print("[INFO] Please install manually:")
+                if self.is_windows:
+                    print("       winget install Microsoft.AzureCLI")
+                else:
+                    print("       brew install azure-cli")
+                return False
+        else:
+            print("[OK] Azure CLI already installed")
         
         # Verify both CLIs work
         print("")

@@ -428,6 +428,13 @@
                             <h1 class="text-3xl font-bold text-green-600 mb-6">✓ Configuration Complete!</h1>
                             <p class="text-lg mb-6">Setting up your Boot_Lang environment...</p>
                             
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">Setup Progress</h3>
+                                <button onclick="window.open('/log_stream','_blank','width=900,height=700')" 
+                                        class="px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 text-sm font-medium">
+                                    📄 View Live Log
+                                </button>
+                            </div>
                             <div id="progress-container" class="space-y-3 mb-6">
                                 <div class="text-gray-500 text-sm">Loading progress...</div>
                             </div>
@@ -470,15 +477,29 @@
                         
                         console.log('Progress data:', data);
                         
-                        // Update progress display
-                        progressContainer.innerHTML = data.progress.map(item => `
-                            <div class="flex items-center p-3 bg-gray-50 rounded">
-                                <span class="mr-3 text-xl">${item.status === 'done' ? '✅' : '⏳'}</span>
-                                <span class="${item.status === 'done' ? 'text-green-700 font-medium' : 'text-gray-700'}">
-                                    ${item.task}... ${item.status === 'done' ? '<span class="text-green-600 font-bold">DONE</span>' : ''}
-                                </span>
+                        // Update progress display with progress bars
+                        progressContainer.innerHTML = data.progress.map(item => {
+                            const showProgress = item.progress && item.progress > 0 && item.status === 'running';
+                            return `
+                            <div class="p-3 bg-gray-50 rounded">
+                                <div class="flex items-center mb-2">
+                                    <span class="mr-3 text-xl">${item.status === 'done' ? '✅' : '⏳'}</span>
+                                    <span class="${item.status === 'done' ? 'text-green-700 font-medium' : 'text-gray-700'}">
+                                        ${item.task}... ${item.status === 'done' ? '<span class="text-green-600 font-bold">DONE</span>' : ''}
+                                    </span>
+                                </div>
+                                ${showProgress ? `
+                                    <div class="ml-10">
+                                        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                            <div class="bg-blue-600 h-4 transition-all duration-300 flex items-center justify-center text-xs text-white font-bold" 
+                                                 style="width: ${item.progress}%">
+                                                ${item.progress}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
-                        `).join('');
+                        `}).join('');
                         
                         // Check if complete or error
                         if (data.complete) {
