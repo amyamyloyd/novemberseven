@@ -37,15 +37,16 @@ python --version
 
 **Once Python is confirmed installed:**
 
-```bash
-cd boot_lang
-.\docs\welcome.bat
+The file is located at `docs/welcome.bat` from the repository root.
+
+**On Windows, run:**
+```powershell
+docs\welcome.bat
 ```
 
-**OR if in root directory:**
-
-```bash
-.\welcome.bat
+**OR if you need the full path:**
+```powershell
+.\docs\welcome.bat
 ```
 
 **Expected behavior:**
