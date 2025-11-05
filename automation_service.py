@@ -59,54 +59,114 @@ class AutomationService:
                 return None
             raise
     
-    def check_and_install_clis(self):
-        """Check and install GitHub CLI and Azure CLI."""
+    def _find_cursor_command(self):
+        """Find cursor CLI command path."""
+        # Try PATH first
+        cursor_path = shutil.which('cursor')
+        if cursor_path:
+            return cursor_path
+        
+        # Try app bundle paths
+        if self.is_windows:
+            # Windows paths
+            possible_paths = [
+                rf"C:\Users\{os.getenv('USERNAME')}\AppData\Local\Programs\cursor\cursor.exe",
+                r"C:\Program Files\Cursor\cursor.exe",
+                r"C:\Program Files (x86)\Cursor\cursor.exe"
+            ]
+        else:
+            # Mac paths
+            possible_paths = [
+                "/Applications/Cursor.app/Contents/Resources/app/bin/cursor",
+                os.path.expanduser("~/Applications/Cursor.app/Contents/Resources/app/bin/cursor")
+            ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
+    
+    def _install_cursor_extension(self, extension_id: str) -> bool:
+        """Install a Cursor extension via command line."""
+        cursor_cmd = self._find_cursor_command()
+        
+        if not cursor_cmd:
+            print("[ERROR] 'cursor' command not found")
+            print("       Please ensure Cursor is installed")
+            return False
+        
+        try:
+            result = subprocess.run(
+                [cursor_cmd, "--install-extension", extension_id],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0:
+                print(f"[OK] Installed extension: {extension_id}")
+                return True
+            else:
+                print(f"[ERROR] Failed to install {extension_id}: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            print(f"[ERROR] Installation timed out for {extension_id}")
+            return False
+        except Exception as e:
+            print(f"[ERROR] Failed to install {extension_id}: {str(e)}")
+            return False
+    
+    def install_cursor_extensions(self):
+        """Install Cursor extensions for GitHub and Azure CLIs."""
         print("==================================================")
-        print("  [AUTH] CLI Authentication")
+        print("  [SETUP] Installing Cursor Extensions")
         print("==================================================")
         print("")
         
-        # Check GitHub CLI
-        if not shutil.which('gh'):
-            print("[WARN] GitHub CLI not found")
-            print("Installing GitHub CLI via winget..." if self.is_windows else "Please install GitHub CLI manually")
-            
-            if self.is_windows:
-                try:
-                    self._run_command(['winget', 'install', '-e', '--id', 'GitHub.cli'], check=False)
-                    print("[OK] GitHub CLI installed - please restart and run setup again")
-                    return False
-                except:
-                    print("[ERROR] Failed to install GitHub CLI")
-                    print("       Please install manually from: https://cli.github.com/")
-                    return False
-            else:
-                print("[ERROR] GitHub CLI not found")
-                print("       macOS:   brew install gh")
-                print("       Linux:   visit https://cli.github.com/")
-                return False
+        # Install GitHub extension
+        print("-> Installing GitHub extension...")
+        gh_success = self._install_cursor_extension("GitHub.vscode-pull-request-github")
         
-        # Check Azure CLI
-        if not shutil.which('az'):
-            print("[WARN] Azure CLI not found")
-            print("Installing Azure CLI via winget..." if self.is_windows else "Please install Azure CLI manually")
-            
-            if self.is_windows:
-                try:
-                    self._run_command(['winget', 'install', '-e', '--id', 'Microsoft.AzureCLI'], check=False)
-                    print("[OK] Azure CLI installed - please restart and run setup again")
-                    return False
-                except:
-                    print("[ERROR] Failed to install Azure CLI")
-                    print("       Please install manually from: https://azure.microsoft.com/en-us/downloads/")
-                    return False
-            else:
-                print("[ERROR] Azure CLI not found")
-                print("       macOS:   brew install azure-cli")
-                print("       Linux:   curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash")
-                return False
+        if not gh_success:
+            print("[ERROR] Failed to install GitHub extension")
+            return False
         
-        print("[OK] CLIs installed")
+        # Install Azure extension
+        print("-> Installing Azure extension...")
+        az_success = self._install_cursor_extension("ms-vscode.azure-account")
+        
+        if not az_success:
+            print("[ERROR] Failed to install Azure extension")
+            return False
+        
+        print("")
+        print("[OK] Extensions installed")
+        print("[INFO] Please authenticate GitHub and Azure in Cursor:")
+        print("       - GitHub: View → Command Palette → 'GitHub: Sign In'")
+        print("       - Azure: View → Command Palette → 'Azure: Sign In'")
+        print("")
+        print("Waiting 10 seconds for you to authenticate...")
+        time.sleep(10)
+        
+        # Verify CLIs are available
+        print("")
+        print("-> Verifying CLI tools...")
+        
+        gh_available = shutil.which('gh') is not None
+        az_available = shutil.which('az') is not None
+        
+        if not gh_available:
+            print("[WARN] 'gh' command not found - GitHub extension may need manual sign-in")
+        else:
+            print("[OK] GitHub CLI available")
+        
+        if not az_available:
+            print("[WARN] 'az' command not found - Azure extension may need manual sign-in")
+        else:
+            print("[OK] Azure CLI available")
+        
         print("")
         return True
     
@@ -504,8 +564,9 @@ class AutomationService:
             print("==================================================")
             print("")
             
-            # Step 0: Check and install CLIs
-            if not self.check_and_install_clis():
+            # Step 0: Install Cursor extensions
+            if not self.install_cursor_extensions():
+                print("[ERROR] Extension installation failed")
                 return False
             
             # Step 0.1: Authenticate

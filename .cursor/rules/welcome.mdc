@@ -39,14 +39,14 @@ python --version
 
 The file is `welcome.bat` in the repository root.
 
-**Run it:**
-```powershell
-welcome.bat
+**CRITICAL - On Windows, run in CMD (not PowerShell):**
+```cmd
+cmd /c welcome.bat
 ```
 
-**OR:**
-```powershell
-.\welcome.bat
+**If already in CMD:**
+```cmd
+welcome.bat
 ```
 
 **Expected behavior:**
