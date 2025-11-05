@@ -10,7 +10,6 @@ import os
 import re
 import urllib.parse
 import platform
-import shutil
 
 class SetupHandler(BaseHTTPRequestHandler):
     """Handle setup webpage requests."""
@@ -305,49 +304,20 @@ class SetupHandler(BaseHTTPRequestHandler):
                 # Trigger automation script in background
                 import subprocess
                 
-                # Detect OS and use appropriate shell
+                # Detect OS and use appropriate automation script
                 is_windows = platform.system() == 'Windows'
                 
                 if is_windows:
-                    # On Windows, try to find Git Bash
-                    git_bash_paths = [
-                        r'C:\Program Files\Git\bin\bash.exe',
-                        r'C:\Program Files (x86)\Git\bin\bash.exe',
-                        os.path.expanduser(r'~\AppData\Local\Programs\Git\bin\bash.exe')
-                    ]
-                    
-                    bash_exe = None
-                    for path in git_bash_paths:
-                        if os.path.exists(path):
-                            bash_exe = path
-                            break
-                    
-                    # Try to find bash in PATH
-                    if not bash_exe:
-                        bash_exe = shutil.which('bash')
-                    
-                    if bash_exe:
-                        print(f"[OK] Using bash at: {bash_exe}")
-                        subprocess.Popen(
-                            [bash_exe, 'automation.sh'],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL
-                        )
-                    else:
-                        print("[ERROR] Git Bash not found. Please install Git for Windows:")
-                        print("       https://git-scm.com/download/win")
-                        print("       Then restart this setup.")
-                        self.send_response(500)
-                        self.send_header('Content-type', 'application/json')
-                        self.end_headers()
-                        error_response = json.dumps({
-                            "success": False,
-                            "error": "Git Bash not found. Please install Git for Windows from https://git-scm.com/download/win"
-                        })
-                        self.wfile.write(error_response.encode())
-                        return
+                    # On Windows, use PowerShell automation script
+                    print("[OK] Running Windows automation script...")
+                    subprocess.Popen(
+                        ['powershell', '-ExecutionPolicy', 'Bypass', '-File', 'automation_win.ps1'],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL
+                    )
                 else:
-                    # On Mac/Linux, use bash directly
+                    # On Mac/Linux, use bash automation script
+                    print("[OK] Running Unix automation script...")
                     subprocess.Popen(
                         ['bash', 'automation.sh'],
                         stdout=subprocess.DEVNULL,

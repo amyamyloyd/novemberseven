@@ -180,8 +180,32 @@
                                 <li>Click "Open"</li>
                             </ol>
                             
-                            <!-- Step 3: Setup -->
-                            <h2 style="margin: 0 0 15px; color: #111827; font-size: 20px; font-weight: 600;">🚀 Step 3: Run Setup</h2>
+                            <!-- New Step 3: Install Python & Git -->
+                            <h2 style="margin: 0 0 15px; color: #111827; font-size: 20px; font-weight: 600;">🚀 Step 3: Install Python & Git</h2>
+                            <p style="margin: 0 0 15px; color: #374151; font-size: 14px; line-height: 1.6;">
+                                SaltAIr requires Python 3.11+ and Git for Windows.
+                            </p>
+                            
+                            <p style="margin: 0 0 10px; color: #374151; font-size: 14px; font-weight: 600;">Install Python (in Cursor terminal):</p>
+                            <pre style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 0 0 10px; overflow-x: auto;"><code style="font-family: monospace; font-size: 13px; color: #111827;">winget install Python.Python.3.12</code></pre>
+                            <p style="margin: 0 0 10px; color: #374151; font-size: 14px; font-weight: 600;">Verify Python:</p>
+                            <pre style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 0 0 20px; overflow-x: auto;"><code style="font-family: monospace; font-size: 13px; color: #111827;">python --version</code></pre>
+                            
+                            <p style="margin: 0 0 10px; color: #374151; font-size: 14px; font-weight: 600;">Install Git for Windows:</p>
+                            <pre style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 0 0 10px; overflow-x: auto;"><code style="font-family: monospace; font-size: 13px; color: #111827;">winget install Git.Git</code></pre>
+                            <p style="margin: 0 0 10px; color: #374151; font-size: 14px; font-weight: 600;">Verify Git:</p>
+                            <pre style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 0 0 15px; overflow-x: auto;"><code style="font-family: monospace; font-size: 13px; color: #111827;">git --version</code></pre>
+                            
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 12px; border-radius: 4px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="color: #991b1b; font-size: 13px; font-weight: 600;">
+                                        ⚠️ CRITICAL: Both Python 3.11+ and Git are required. The setup will fail without Git Bash. Restart Cursor after installation.
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Step 4: Run Setup -->
+                            <h2 style="margin: 0 0 15px; color: #111827; font-size: 20px; font-weight: 600;">🚀 Step 4: Run Setup</h2>
                             <p style="margin: 0 0 15px; color: #374151; font-size: 14px; line-height: 1.6;">
                                 In Cursor, tell the AI agent:
                             </p>
