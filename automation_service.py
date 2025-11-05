@@ -118,39 +118,95 @@ class AutomationService:
             print(f"[ERROR] Failed to install {extension_id}: {str(e)}")
             return False
     
-    def install_cursor_extensions(self):
-        """Install Cursor extensions for GitHub and Azure CLIs."""
+    def _install_cli_tool(self, tool_name: str, install_cmd: list) -> bool:
+        """Install CLI tool with visible output and timeout."""
+        print(f"-> Installing {tool_name}...")
+        self._log_progress(f"PROGRESS:Installing {tool_name}")
+        
+        try:
+            # Run with visible output and timeout
+            process = subprocess.Popen(
+                install_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding='utf-8'
+            )
+            
+            # Stream output
+            for line in process.stdout:
+                print(f"   {line.rstrip()}")
+                self._log_progress(line.rstrip())
+            
+            # Wait with timeout
+            try:
+                process.wait(timeout=120)  # 2 minute timeout
+            except subprocess.TimeoutExpired:
+                process.kill()
+                print(f"[ERROR] {tool_name} installation timed out")
+                self._log_progress(f"ERROR:{tool_name} installation timed out")
+                return False
+            
+            if process.returncode == 0:
+                print(f"[OK] {tool_name} installed successfully")
+                self._log_progress(f"DONE:Installing {tool_name}")
+                return True
+            else:
+                print(f"[ERROR] {tool_name} installation failed (exit code {process.returncode})")
+                self._log_progress(f"ERROR:{tool_name} installation failed")
+                return False
+                
+        except Exception as e:
+            print(f"[ERROR] Failed to install {tool_name}: {str(e)}")
+            self._log_progress(f"ERROR:{tool_name} installation failed: {str(e)}")
+            return False
+    
+    def install_cli_tools(self):
+        """Install CLI tools and extensions."""
         print("==================================================")
-        print("  [SETUP] Installing Cursor Extensions")
+        print("  [SETUP] Installing CLI Tools")
         print("==================================================")
         print("")
         
-        # Install GitHub extension
-        print("-> Installing GitHub extension...")
-        gh_success = self._install_cursor_extension("GitHub.vscode-pull-request-github")
-        
-        if not gh_success:
-            print("[ERROR] Failed to install GitHub extension")
-            return False
-        
-        # Install Azure extension
+        # Install Azure extension (works, provides az CLI)
         print("-> Installing Azure extension...")
-        az_success = self._install_cursor_extension("ms-vscode.azure-account")
+        az_ext_success = self._install_cursor_extension("ms-vscode.azurecli")
         
-        if not az_success:
-            print("[ERROR] Failed to install Azure extension")
-            return False
+        if not az_ext_success:
+            print("[WARN] Failed to install Azure extension, will try system CLI")
         
-        print("")
-        print("[OK] Extensions installed")
-        print("[INFO] Please authenticate GitHub and Azure in Cursor:")
-        print("       - GitHub: View → Command Palette → 'GitHub: Sign In'")
-        print("       - Azure: View → Command Palette → 'Azure: Sign In'")
-        print("")
-        print("Waiting 10 seconds for you to authenticate...")
-        time.sleep(10)
+        # Install GitHub CLI (system-level)
+        gh_installed = shutil.which('gh') is not None
         
-        # Verify CLIs are available
+        if not gh_installed:
+            print("GitHub CLI not found, installing...")
+            
+            if self.is_windows:
+                # Windows: use winget
+                gh_success = self._install_cli_tool(
+                    "GitHub CLI",
+                    ['winget', 'install', '-e', '--id', 'GitHub.cli', '--accept-source-agreements', '--accept-package-agreements']
+                )
+            else:
+                # Mac: use brew
+                gh_success = self._install_cli_tool(
+                    "GitHub CLI",
+                    ['brew', 'install', 'gh']
+                )
+            
+            if not gh_success:
+                print("")
+                print("[ERROR] GitHub CLI installation failed")
+                print("[INFO] Please install manually:")
+                if self.is_windows:
+                    print("       winget install GitHub.cli")
+                else:
+                    print("       brew install gh")
+                return False
+        else:
+            print("[OK] GitHub CLI already installed")
+        
+        # Verify both CLIs work
         print("")
         print("-> Verifying CLI tools...")
         
@@ -158,12 +214,13 @@ class AutomationService:
         az_available = shutil.which('az') is not None
         
         if not gh_available:
-            print("[WARN] 'gh' command not found - GitHub extension may need manual sign-in")
+            print("[ERROR] 'gh' command not available after installation")
+            return False
         else:
             print("[OK] GitHub CLI available")
         
         if not az_available:
-            print("[WARN] 'az' command not found - Azure extension may need manual sign-in")
+            print("[WARN] 'az' command not found - extension may need restart")
         else:
             print("[OK] Azure CLI available")
         
@@ -564,9 +621,9 @@ class AutomationService:
             print("==================================================")
             print("")
             
-            # Step 0: Install Cursor extensions
-            if not self.install_cursor_extensions():
-                print("[ERROR] Extension installation failed")
+            # Step 0: Install CLI tools
+            if not self.install_cli_tools():
+                print("[ERROR] CLI tool installation failed")
                 return False
             
             # Step 0.1: Authenticate
