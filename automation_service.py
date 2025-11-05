@@ -130,25 +130,40 @@ class AutomationService:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                encoding='utf-8'
+                encoding='utf-8',
+                errors='replace'
             )
             
             # Stream output and parse progress
             import re
+            output_lines = []
             for line in process.stdout:
-                clean_line = line.rstrip()
-                print(f"   {clean_line}")
-                self._log_progress(clean_line)
-                
-                # Parse download progress for progress bar (e.g., "15.3 MB / 64.3 MB")
-                if 'MB' in clean_line and '/' in clean_line:
-                    match = re.search(r'([\d.]+)\s*MB\s*/\s*([\d.]+)\s*MB', clean_line)
-                    if match:
-                        current_mb = float(match.group(1))
-                        total_mb = float(match.group(2))
-                        if total_mb > 0:
-                            percent = int((current_mb / total_mb) * 100)
-                            self._log_progress(f"DOWNLOAD_PROGRESS:{tool_name}:{percent}")
+                try:
+                    clean_line = line.rstrip()
+                    # Sanitize for console output to avoid charmap errors
+                    safe_line = clean_line.encode('ascii', errors='replace').decode('ascii')
+                    output_lines.append(safe_line.lower())
+                    
+                    # Print and log safely
+                    try:
+                        print(f"   {safe_line}")
+                    except (UnicodeEncodeError, UnicodeDecodeError):
+                        pass  # Skip if still problematic
+                    
+                    self._log_progress(safe_line)
+                    
+                    # Parse download progress for progress bar (e.g., "15.3 MB / 64.3 MB")
+                    if 'MB' in safe_line and '/' in safe_line:
+                        match = re.search(r'([\d.]+)\s*MB\s*/\s*([\d.]+)\s*MB', safe_line)
+                        if match:
+                            current_mb = float(match.group(1))
+                            total_mb = float(match.group(2))
+                            if total_mb > 0:
+                                percent = int((current_mb / total_mb) * 100)
+                                self._log_progress(f"DOWNLOAD_PROGRESS:{tool_name}:{percent}")
+                except Exception:
+                    # Skip problematic lines
+                    continue
             
             # Wait with timeout
             try:
@@ -159,7 +174,16 @@ class AutomationService:
                 self._log_progress(f"ERROR:{tool_name} installation timed out")
                 return False
             
-            if process.returncode == 0:
+            # Check if successful or already installed
+            output_text = ' '.join(output_lines)
+            already_installed = any(indicator in output_text for indicator in [
+                'already installed',
+                'no available upgrade',
+                'successfully installed',
+                'found an existing package'
+            ])
+            
+            if process.returncode == 0 or already_installed:
                 print(f"[OK] {tool_name} installed successfully")
                 self._log_progress(f"DONE:Installing {tool_name}")
                 return True
@@ -480,10 +504,38 @@ class AutomationService:
         
         self._log_progress("DONE:Securing configuration file")
     
-    def set_github_secrets(self):
-        """Set GitHub repository secrets."""
-        self._log_progress("PROGRESS:Setting GitHub secrets")
-        print("-> Setting GitHub secrets...")
+    def get_azure_publish_profile(self) -> str:
+        """Get Azure App Service publish profile XML."""
+        try:
+            app_name = self.config['azure_settings']['app_service_name']
+            resource_group = self.config['azure_settings'].get('resource_group')
+            
+            if not resource_group:
+                print("[WARN] Resource group not configured")
+                return None
+            
+            # Get publish profile from Azure
+            result = self._run_command([
+                'az', 'webapp', 'deployment', 'list-publishing-profiles',
+                '--name', app_name,
+                '--resource-group', resource_group,
+                '--xml'
+            ], capture_output=True, check=False)
+            
+            if result and result.returncode == 0:
+                return result.stdout.strip()
+            else:
+                print("[WARN] Could not retrieve Azure publish profile")
+                return None
+                
+        except Exception as e:
+            print(f"[WARN] Error getting publish profile: {e}")
+            return None
+    
+    def set_api_key_secrets(self):
+        """Set API key GitHub repository secrets."""
+        self._log_progress("PROGRESS:Setting API key secrets")
+        print("-> Setting API key secrets...")
         
         openai_key = self.config['api_keys']['openai_api_key']
         anthropic_key = self.config['api_keys'].get('anthropic_api_key', '')
@@ -511,8 +563,37 @@ class AutomationService:
                                    stderr=subprocess.DEVNULL)
             proc.communicate(input=langsmith_key.encode())
         
-        print("[OK] GitHub secrets set")
-        self._log_progress("DONE:Setting GitHub secrets")
+        print("[OK] API key secrets set")
+        self._log_progress("DONE:Setting API key secrets")
+    
+    def set_azure_secrets(self):
+        """Set Azure deployment secrets in GitHub."""
+        self._log_progress("PROGRESS:Setting Azure deployment secrets")
+        print("-> Setting Azure deployment secrets...")
+        
+        # Get publish profile from Azure
+        publish_profile = self.get_azure_publish_profile()
+        
+        if not publish_profile:
+            print("[WARN] Skipping Azure secrets - publish profile not available")
+            print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually in GitHub")
+            return
+        
+        # Set publish profile as GitHub secret
+        try:
+            proc = subprocess.Popen(
+                ['gh', 'secret', 'set', 'AZURE_WEBAPP_PUBLISH_PROFILE'],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            proc.communicate(input=publish_profile.encode())
+            
+            print("[OK] Azure deployment secrets set")
+            self._log_progress("DONE:Setting Azure deployment secrets")
+        except Exception as e:
+            print(f"[WARN] Failed to set Azure secrets: {e}")
+            print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually")
     
     def commit_and_push(self):
         """Commit and push to GitHub."""
@@ -705,14 +786,17 @@ class AutomationService:
             # Step 8: Secure config
             self.secure_config_file()
             
-            # Step 9: Set GitHub secrets
-            self.set_github_secrets()
+            # Step 9: Set API key secrets
+            self.set_api_key_secrets()
             
             # Step 10: Commit and push
             self.commit_and_push()
             
             # Step 11: Create dev environment
             self.create_dev_environment()
+            
+            # Step 11b: Set Azure secrets (after resources exist)
+            self.set_azure_secrets()
             
             # Step 12: Verify deployment
             self.verify_deployment()
