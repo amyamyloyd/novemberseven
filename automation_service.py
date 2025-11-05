@@ -442,15 +442,20 @@ class AutomationService:
             print("")
             return True
         
-        # Authenticate
+        # Authenticate - DO NOT suppress output, user needs to see prompts
         try:
-            self._run_command([gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
+            # Run interactively - let output flow to user
+            result = subprocess.run([gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
+            print("")
             print("[OK] GitHub CLI authenticated")
             print("")
             return True
-        except:
+        except subprocess.CalledProcessError:
             print("[ERROR] GitHub authentication failed")
             print("Please try again or check your network connection")
+            return False
+        except Exception as e:
+            print(f"[ERROR] GitHub authentication error: {str(e)}")
             return False
     
     def authenticate_azure(self):
@@ -471,15 +476,20 @@ class AutomationService:
             print("")
             return True
         
-        # Authenticate
+        # Authenticate - DO NOT suppress output, user needs to see prompts
         try:
-            self._run_command([az_cmd, 'login', '--use-device-code'], check=True)
+            # Run interactively - let output flow to user
+            result = subprocess.run([az_cmd, 'login', '--use-device-code'], check=True)
+            print("")
             print("[OK] Azure CLI authenticated")
             print("")
             return True
-        except:
+        except subprocess.CalledProcessError:
             print("[ERROR] Azure authentication failed")
             print("Please try again or check your network connection")
+            return False
+        except Exception as e:
+            print(f"[ERROR] Azure authentication error: {str(e)}")
             return False
     
     def setup_azure_subscription(self):
