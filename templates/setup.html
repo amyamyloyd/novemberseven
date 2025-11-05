@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SaltAIr Setup</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Spinner animation for progress */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="bg-white min-h-screen">
     <div class="flex h-screen">
@@ -477,27 +493,20 @@
                         
                         console.log('Progress data:', data);
                         
-                        // Update progress display with progress bars
+                        // Update progress display with spinner animation
                         progressContainer.innerHTML = data.progress.map(item => {
-                            const showProgress = item.progress && item.progress > 0 && item.status === 'running';
+                            const spinner = item.status === 'running' ? 
+                                '<div class="spinner mr-3"></div>' : 
+                                '<span class="mr-3 text-xl">✅</span>';
+                            
                             return `
                             <div class="p-3 bg-gray-50 rounded">
-                                <div class="flex items-center mb-2">
-                                    <span class="mr-3 text-xl">${item.status === 'done' ? '✅' : '⏳'}</span>
+                                <div class="flex items-center">
+                                    ${spinner}
                                     <span class="${item.status === 'done' ? 'text-green-700 font-medium' : 'text-gray-700'}">
-                                        ${item.task}... ${item.status === 'done' ? '<span class="text-green-600 font-bold">DONE</span>' : ''}
+                                        ${item.task}... ${item.status === 'done' ? '<span class="text-green-600 font-bold">DONE</span>' : '<span class="text-blue-600">Working...</span>'}
                                     </span>
                                 </div>
-                                ${showProgress ? `
-                                    <div class="ml-10">
-                                        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                                            <div class="bg-blue-600 h-4 transition-all duration-300 flex items-center justify-center text-xs text-white font-bold" 
-                                                 style="width: ${item.progress}%">
-                                                ${item.progress}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                ` : ''}
                             </div>
                         `}).join('');
                         
