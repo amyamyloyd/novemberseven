@@ -59,6 +59,49 @@ class AutomationService:
                 return None
             raise
     
+    def _find_gh_command(self):
+        """Find GitHub CLI command path."""
+        # Try PATH first
+        gh_path = shutil.which('gh')
+        if gh_path:
+            return gh_path
+        
+        # Check common install locations
+        common_paths = [
+            'C:\\Program Files\\GitHub CLI\\gh.exe',
+            'C:\\Program Files (x86)\\GitHub CLI\\gh.exe',
+            os.path.expanduser('~/bin/gh'),
+            '/usr/local/bin/gh',
+            '/opt/homebrew/bin/gh'
+        ]
+        
+        for path in common_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
+    
+    def _find_az_command(self):
+        """Find Azure CLI command path."""
+        # Try PATH first
+        az_path = shutil.which('az')
+        if az_path:
+            return az_path
+        
+        # Check common install locations
+        common_paths = [
+            'C:\\Program Files\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az.cmd',
+            'C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az.cmd',
+            '/usr/local/bin/az',
+            '/opt/homebrew/bin/az'
+        ]
+        
+        for path in common_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
+    
     def _find_cursor_command(self):
         """Find cursor CLI command path."""
         # Try PATH first
@@ -82,6 +125,88 @@ class AutomationService:
             ]
         
         for path in possible_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
+    
+    def _find_gh_command(self):
+        """Find GitHub CLI executable, refreshing PATH if needed."""
+        import winreg
+        import time
+        
+        # Try PATH first
+        gh_path = shutil.which('gh')
+        if gh_path:
+            return gh_path
+        
+        # On Windows, refresh PATH from registry
+        if self.is_windows:
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+                                    r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
+                path_value, _ = winreg.QueryValueEx(key, 'Path')
+                winreg.CloseKey(key)
+                os.environ['PATH'] = path_value
+                time.sleep(1)  # Brief wait for PATH update
+                
+                # Try again after refresh
+                gh_path = shutil.which('gh')
+                if gh_path:
+                    return gh_path
+            except:
+                pass
+        
+        # Check common installation paths
+        common_paths = [
+            r'C:\Program Files\GitHub CLI\gh.exe',
+            r'C:\Program Files (x86)\GitHub CLI\gh.exe',
+            '/usr/local/bin/gh',
+            '/opt/homebrew/bin/gh'
+        ]
+        
+        for path in common_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
+    
+    def _find_az_command(self):
+        """Find Azure CLI executable, refreshing PATH if needed."""
+        import winreg
+        import time
+        
+        # Try PATH first
+        az_path = shutil.which('az')
+        if az_path:
+            return az_path
+        
+        # On Windows, refresh PATH from registry
+        if self.is_windows:
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+                                    r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
+                path_value, _ = winreg.QueryValueEx(key, 'Path')
+                winreg.CloseKey(key)
+                os.environ['PATH'] = path_value
+                time.sleep(1)  # Brief wait for PATH update
+                
+                # Try again after refresh
+                az_path = shutil.which('az')
+                if az_path:
+                    return az_path
+            except:
+                pass
+        
+        # Check common installation paths
+        common_paths = [
+            r'C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin\az.cmd',
+            r'C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd',
+            '/usr/local/bin/az',
+            '/opt/homebrew/bin/az'
+        ]
+        
+        for path in common_paths:
             if os.path.exists(path):
                 return path
         
@@ -276,20 +401,25 @@ class AutomationService:
         # Verify both CLIs work
         print("")
         print("-> Verifying CLI tools...")
+        self._log_progress("Verifying CLI tools...")
         
-        gh_available = shutil.which('gh') is not None
-        az_available = shutil.which('az') is not None
+        gh_cmd = self._find_gh_command()
+        az_cmd = self._find_az_command()
         
-        if not gh_available:
+        if not gh_cmd:
             print("[ERROR] 'gh' command not available after installation")
+            self._log_progress("ERROR:'gh' command not available")
             return False
         else:
             print("[OK] GitHub CLI available")
+            self._log_progress("GitHub CLI verified")
         
-        if not az_available:
-            print("[WARN] 'az' command not found - extension may need restart")
+        if not az_cmd:
+            print("[WARN] 'az' command not found - may need PATH refresh")
+            self._log_progress("WARN:'az' command not found")
         else:
             print("[OK] Azure CLI available")
+            self._log_progress("Azure CLI verified")
         
         print("")
         return True
@@ -300,8 +430,13 @@ class AutomationService:
         print("  (Browser will open for authentication)")
         print("")
         
+        gh_cmd = self._find_gh_command()
+        if not gh_cmd:
+            print("[ERROR] GitHub CLI not found")
+            return False
+        
         # Check if already authenticated
-        result = self._run_command(['gh', 'auth', 'status'], check=False, capture_output=True)
+        result = self._run_command([gh_cmd, 'auth', 'status'], check=False, capture_output=True)
         if result and result.returncode == 0:
             print("[OK] GitHub CLI already authenticated")
             print("")
@@ -309,7 +444,7 @@ class AutomationService:
         
         # Authenticate
         try:
-            self._run_command(['gh', 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
+            self._run_command([gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
             print("[OK] GitHub CLI authenticated")
             print("")
             return True
@@ -324,8 +459,13 @@ class AutomationService:
         print("  (Browser will open for authentication)")
         print("")
         
+        az_cmd = self._find_az_command()
+        if not az_cmd:
+            print("[ERROR] Azure CLI not found")
+            return False
+        
         # Check if already authenticated
-        result = self._run_command(['az', 'account', 'show'], check=False, capture_output=True)
+        result = self._run_command([az_cmd, 'account', 'show'], check=False, capture_output=True)
         if result and result.returncode == 0:
             print("[OK] Azure CLI already authenticated")
             print("")
@@ -333,7 +473,7 @@ class AutomationService:
         
         # Authenticate
         try:
-            self._run_command(['az', 'login', '--use-device-code'], check=True)
+            self._run_command([az_cmd, 'login', '--use-device-code'], check=True)
             print("[OK] Azure CLI authenticated")
             print("")
             return True
@@ -346,9 +486,14 @@ class AutomationService:
         """Set Azure subscription from config."""
         subscription_id = self.config.get('azure_settings', {}).get('subscription_id')
         
+        az_cmd = self._find_az_command()
+        if not az_cmd:
+            print("[WARN] Azure CLI not found - skipping subscription setup")
+            return
+        
         if subscription_id:
             print(f"-> Setting Azure subscription...")
-            result = self._run_command(['az', 'account', 'set', '--subscription', subscription_id], check=False)
+            result = self._run_command([az_cmd, 'account', 'set', '--subscription', subscription_id], check=False)
             
             if result and result.returncode == 0:
                 print(f"[OK] Azure subscription set: {subscription_id}")
@@ -507,6 +652,11 @@ class AutomationService:
     def get_azure_publish_profile(self) -> str:
         """Get Azure App Service publish profile XML."""
         try:
+            az_cmd = self._find_az_command()
+            if not az_cmd:
+                print("[WARN] Azure CLI not found")
+                return None
+            
             app_name = self.config['azure_settings']['app_service_name']
             resource_group = self.config['azure_settings'].get('resource_group')
             
@@ -516,7 +666,7 @@ class AutomationService:
             
             # Get publish profile from Azure
             result = self._run_command([
-                'az', 'webapp', 'deployment', 'list-publishing-profiles',
+                az_cmd, 'webapp', 'deployment', 'list-publishing-profiles',
                 '--name', app_name,
                 '--resource-group', resource_group,
                 '--xml'
@@ -537,12 +687,17 @@ class AutomationService:
         self._log_progress("PROGRESS:Setting API key secrets")
         print("-> Setting API key secrets...")
         
+        gh_cmd = self._find_gh_command()
+        if not gh_cmd:
+            print("[ERROR] GitHub CLI not found")
+            return False
+        
         openai_key = self.config['api_keys']['openai_api_key']
         anthropic_key = self.config['api_keys'].get('anthropic_api_key', '')
         langsmith_key = self.config['api_keys'].get('langsmith_api_key', '')
         
         # Set OpenAI key
-        proc = subprocess.Popen(['gh', 'secret', 'set', 'OPENAI_API_KEY'], 
+        proc = subprocess.Popen([gh_cmd, 'secret', 'set', 'OPENAI_API_KEY'], 
                                stdin=subprocess.PIPE, 
                                stdout=subprocess.DEVNULL, 
                                stderr=subprocess.DEVNULL)
@@ -550,14 +705,14 @@ class AutomationService:
         
         # Set optional keys
         if anthropic_key:
-            proc = subprocess.Popen(['gh', 'secret', 'set', 'ANTHROPIC_API_KEY'], 
+            proc = subprocess.Popen([gh_cmd, 'secret', 'set', 'ANTHROPIC_API_KEY'], 
                                    stdin=subprocess.PIPE, 
                                    stdout=subprocess.DEVNULL, 
                                    stderr=subprocess.DEVNULL)
             proc.communicate(input=anthropic_key.encode())
         
         if langsmith_key:
-            proc = subprocess.Popen(['gh', 'secret', 'set', 'LANGSMITH_API_KEY'], 
+            proc = subprocess.Popen([gh_cmd, 'secret', 'set', 'LANGSMITH_API_KEY'], 
                                    stdin=subprocess.PIPE, 
                                    stdout=subprocess.DEVNULL, 
                                    stderr=subprocess.DEVNULL)
@@ -571,6 +726,11 @@ class AutomationService:
         self._log_progress("PROGRESS:Setting Azure deployment secrets")
         print("-> Setting Azure deployment secrets...")
         
+        gh_cmd = self._find_gh_command()
+        if not gh_cmd:
+            print("[ERROR] GitHub CLI not found")
+            return
+        
         # Get publish profile from Azure
         publish_profile = self.get_azure_publish_profile()
         
@@ -582,7 +742,7 @@ class AutomationService:
         # Set publish profile as GitHub secret
         try:
             proc = subprocess.Popen(
-                ['gh', 'secret', 'set', 'AZURE_WEBAPP_PUBLISH_PROFILE'],
+                [gh_cmd, 'secret', 'set', 'AZURE_WEBAPP_PUBLISH_PROFILE'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL

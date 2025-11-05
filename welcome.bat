@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 REM Check if setup server is already running
-netstat -ano | findstr ":8001" >nul 2>&1
+netstat -ano | findstr ":8001" | findstr "LISTENING" >nul 2>&1
 if %errorlevel% equ 0 (
     echo Setup server already running.
     goto OPEN_BROWSER
