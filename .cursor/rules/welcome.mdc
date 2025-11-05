@@ -37,24 +37,17 @@ python --version
 
 **Once Python is confirmed installed:**
 
-The file is located at `docs/welcome.bat` from the repository root.
+The file is `welcome.bat` in the repository root.
 
-**CRITICAL FOR WINDOWS:**
-1. **ALWAYS change to the project directory FIRST:**
-   ```powershell
-   cd boot_lang
-   ```
-   or
-   ```powershell
-   cd "C:\Users\[username]\path\to\boot_lang"
-   ```
+**Run it:**
+```powershell
+welcome.bat
+```
 
-2. **Then run the batch file using cmd /c:**
-   ```powershell
-   cmd /c docs\welcome.bat
-   ```
-
-**DO NOT use `.\docs\welcome.bat` directly in PowerShell - it will fail.**
+**OR:**
+```powershell
+.\welcome.bat
+```
 
 **Expected behavior:**
 - Script checks if setup server is running on port 8001

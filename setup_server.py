@@ -301,28 +301,23 @@ class SetupHandler(BaseHTTPRequestHandler):
                 print("[OK] Configuration saved successfully")
                 print("[OK] Starting automation in background...")
                 
-                # Trigger automation script in background
-                import subprocess
+                # Trigger automation in background using Python service
+                import threading
+                import automation_service
                 
-                # Detect OS and use appropriate automation script
-                is_windows = platform.system() == 'Windows'
+                def run_automation_async():
+                    """Run automation in background thread."""
+                    try:
+                        automation_service.run_automation()
+                    except Exception as e:
+                        print(f"[ERROR] Automation failed: {e}")
+                        import traceback
+                        traceback.print_exc()
                 
-                if is_windows:
-                    # On Windows, use PowerShell automation script
-                    print("[OK] Running Windows automation script...")
-                    subprocess.Popen(
-                        ['powershell', '-ExecutionPolicy', 'Bypass', '-File', 'automation_win.ps1'],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:
-                    # On Mac/Linux, use bash automation script
-                    print("[OK] Running Unix automation script...")
-                    subprocess.Popen(
-                        ['bash', 'automation.sh'],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
+                # Start automation in background thread
+                automation_thread = threading.Thread(target=run_automation_async, daemon=True)
+                automation_thread.start()
+                print("[OK] Automation started in background")
                 
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
