@@ -33,27 +33,64 @@ python --version
    - May require restarting terminal/Cursor
    - If still failing, manually guide user to python.org/downloads
 
+### Step 1.5: Check Git Installation (Windows)
+
+**CRITICAL: On Windows, Git Bash is REQUIRED to run automation.sh**
+
+**Check if Git is installed:**
+```powershell
+git --version
+```
+
+**If Git is NOT installed:**
+
+1. **Install Git for Windows:**
+   ```powershell
+   winget install -e --id Git.Git
+   ```
+   
+2. **OR download from:** https://git-scm.com/download/win
+
+3. **Wait for installation to complete** (30-60 seconds)
+
+4. **Verify installation:**
+   ```bash
+   git --version
+   ```
+   Must show git version 2.x or higher
+
+5. **IMPORTANT:** After Git installation, you may need to restart Cursor/terminal for Git Bash to be available in PATH
+
 ### Step 2: Run welcome.bat
 
 **Once Python is confirmed installed:**
 
 The file is located at `docs/welcome.bat` from the repository root.
 
-**On Windows, run:**
-```powershell
-docs\welcome.bat
-```
+**CRITICAL FOR WINDOWS:**
+1. **ALWAYS change to the project directory FIRST:**
+   ```powershell
+   cd boot_lang
+   ```
+   or
+   ```powershell
+   cd "C:\Users\[username]\path\to\boot_lang"
+   ```
 
-**OR if you need the full path:**
-```powershell
-.\docs\welcome.bat
-```
+2. **Then run the batch file using cmd /c:**
+   ```powershell
+   cmd /c docs\welcome.bat
+   ```
+
+**DO NOT use `.\docs\welcome.bat` directly in PowerShell - it will fail.**
 
 **Expected behavior:**
 - Script checks if setup server is running on port 8001
 - If not running, starts `python setup_server.py` in background
 - Opens browser to http://localhost:8001/setup
 - If already running, just opens browser
+
+**IMPORTANT:** The setup process requires Git Bash to run `automation.sh`. If Git is not installed, the setup will fail with a clear error message directing the user to install Git for Windows from https://git-scm.com/download/win
 
 ### Step 3: Monitor for Errors
 
