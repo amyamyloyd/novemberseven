@@ -66,6 +66,29 @@ class ToolInstaller:
             self.log(f"[ERROR] Failed to install {tool_name}: {e}")
             return False
     
+    def install_mac_tool(self, tool_name, brew_pkg):
+        """Install tool via brew on Mac."""
+        self.log(f"-> Installing {tool_name} via brew...")
+        
+        try:
+            # Run brew install
+            result = subprocess.run(
+                ['brew', 'install', brew_pkg],
+                capture_output=False,  # Show output to user
+                text=True
+            )
+            
+            if result.returncode == 0:
+                self.log(f"[OK] {tool_name} installed successfully")
+                return True
+            else:
+                self.log(f"[WARN] {tool_name} installation returned code {result.returncode}")
+                return False
+                
+        except Exception as e:
+            self.log(f"[ERROR] Failed to install {tool_name}: {e}")
+            return False
+    
     def check_and_install(self):
         """Check for missing tools and install them."""
         self.log("=================================================")
@@ -120,20 +143,50 @@ class ToolInstaller:
                 self.log("Please install manually and re-run setup")
                 return 2  # Failure
         else:
-            # Mac/Linux - provide manual install instructions
+            # Mac/Linux - auto-install via brew (Mac) or provide manual instructions (Linux)
             self.log("")
-            self.log("[ERROR] Missing tools on Mac/Linux")
-            self.log("Please install manually:")
-            for cmd, name in missing_tools:
-                if cmd == 'gh':
-                    self.log(f"  - {name}: brew install gh")
-                elif cmd == 'az':
-                    self.log(f"  - {name}: brew install azure-cli")
-                elif cmd == 'git':
-                    self.log(f"  - {name}: brew install git")
+            self.log(f"-> Installing {len(missing_tools)} missing tool(s)...")
             self.log("")
-            self.log("After installation, run this script again.")
-            return 2  # Failure
+            
+            # Map commands to brew packages
+            brew_map = {
+                'git': 'git',
+                'gh': 'gh',
+                'az': 'azure-cli'
+            }
+            
+            # Check if brew is available (Mac)
+            if shutil.which('brew'):
+                for cmd, name in missing_tools:
+                    if cmd in brew_map:
+                        brew_pkg = brew_map[cmd]
+                        if self.install_mac_tool(name, brew_pkg):
+                            tools_installed = True
+                
+                if tools_installed:
+                    self.log("")
+                    self.log("[OK] Tool installation complete")
+                    self.log("-> Shell restart required to update PATH")
+                    return 1  # Success, restart needed
+                else:
+                    self.log("")
+                    self.log("[ERROR] Some tools failed to install")
+                    self.log("Please install manually and re-run setup")
+                    return 2  # Failure
+            else:
+                # Linux or brew not found - manual instructions
+                self.log("[ERROR] Homebrew not found - cannot auto-install")
+                self.log("Please install manually:")
+                for cmd, name in missing_tools:
+                    if cmd == 'gh':
+                        self.log(f"  - {name}: brew install gh (Mac) or see https://cli.github.com/")
+                    elif cmd == 'az':
+                        self.log(f"  - {name}: brew install azure-cli (Mac) or see https://docs.microsoft.com/cli/azure/")
+                    elif cmd == 'git':
+                        self.log(f"  - {name}: brew install git (Mac) or apt/dnf install git (Linux)")
+                self.log("")
+                self.log("After installation, run this script again.")
+                return 2  # Failure
 
 
 if __name__ == "__main__":
