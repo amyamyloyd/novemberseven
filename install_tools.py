@@ -18,7 +18,6 @@ class ToolInstaller:
         self.is_windows = platform.system() == 'Windows'
         self.log_file = 'setup_progress.log'
         self.required_tools = {
-            'python': 'Python 3.11+',
             'git': 'Git',
             'gh': 'GitHub CLI',
             'az': 'Azure CLI'
@@ -90,7 +89,6 @@ class ToolInstaller:
             
             # Map commands to winget IDs
             winget_map = {
-                'python': ('Python 3.12', 'Python.Python.3.12'),
                 'git': ('Git', 'Git.Git'),
                 'gh': ('GitHub CLI', 'GitHub.cli'),
                 'az': ('Azure CLI', 'Microsoft.AzureCLI')
@@ -124,6 +122,8 @@ class ToolInstaller:
                     self.log(f"  - {name}: brew install azure-cli")
                 elif cmd == 'git':
                     self.log(f"  - {name}: brew install git")
+            self.log("")
+            self.log("After installation, run this script again.")
             return 2  # Failure
 
 

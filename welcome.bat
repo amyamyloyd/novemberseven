@@ -10,7 +10,20 @@ if exist "%TEMP%\saltair_restart.flag" (
     goto START_SERVER
 )
 
-REM Step 1: Check and install required tools
+REM Step 0: Check if Python is installed FIRST
+python --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Python is not installed or not in PATH.
+    echo.
+    echo Please install Python 3.11+ using:
+    echo   winget install -e --id Python.Python.3.12
+    echo.
+    echo After installation completes, run this script again.
+    pause
+    exit /b 1
+)
+
+REM Step 1: Check and install required tools (Git, GitHub CLI, Azure CLI)
 echo.
 echo Checking required tools...
 echo.
