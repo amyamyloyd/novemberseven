@@ -1,23 +1,68 @@
 Starting automation...
-[2025-11-07 13:14:47] ==================================================
-[2025-11-07 13:14:47]   [VERIFY] Checking CLI Tools
-[2025-11-07 13:14:47] ==================================================
-[2025-11-07 13:14:47] 
-[2025-11-07 13:14:47] [OK] GitHub CLI found
+[2025-11-07 15:24:15] ==================================================
+[2025-11-07 15:24:15]   [VERIFY] Checking CLI Tools
+[2025-11-07 15:24:15] ==================================================
+[2025-11-07 15:24:15] 
+[2025-11-07 15:24:15] [OK] GitHub CLI found
 GitHub CLI verified
-[2025-11-07 13:14:47] [OK] Azure CLI found
+[2025-11-07 15:24:15] [OK] Azure CLI found
 Azure CLI verified
-[2025-11-07 13:14:47] 
-[2025-11-07 13:14:47] -> Authenticating GitHub CLI...
-[2025-11-07 13:14:47]   (Browser will open for authentication)
-[2025-11-07 13:14:47] 
-[2025-11-07 13:14:49] [OK] GitHub CLI already authenticated
-[2025-11-07 13:14:49] 
-[2025-11-07 13:14:49] -> Authenticating Azure CLI...
-[2025-11-07 13:14:49]   (Browser will open for authentication)
-[2025-11-07 13:14:49] 
-[2025-11-07 13:14:50] [OK] Azure CLI already authenticated
-[2025-11-07 13:14:50] 
+[2025-11-07 15:24:15] 
+[2025-11-07 15:24:15] -> Authenticating GitHub CLI...
+[2025-11-07 15:24:15]   (Browser will open for authentication)
+[2025-11-07 15:24:15] 
+[2025-11-07 15:24:16] [OK] GitHub CLI already authenticated
+[2025-11-07 15:24:16] 
+[2025-11-07 15:24:16] -> Authenticating Azure CLI...
+[2025-11-07 15:24:16]   (Browser will open for authentication)
+[2025-11-07 15:24:16] 
+[2025-11-07 15:24:17] [OK] Azure CLI already authenticated
+[2025-11-07 15:24:17] 
+PROGRESS:Provisioning Azure resources
+[2025-11-07 15:24:17] -> Provisioning Azure resources...
+[2025-11-07 15:24:17] -> Checking if resource group exists...
+[2025-11-07 15:24:18] -> Creating resource group 'elevenseven-rg'...
+[2025-11-07 15:24:19] [OK] Resource group created
+[2025-11-07 15:24:19] -> Creating App Service plan 'elevenseven-backend-plan'...
+[2025-11-07 15:24:29] [OK] App Service plan created (Basic B1 - free tier eligible)
+[2025-11-07 15:24:29] -> Creating Dev Web App 'elevenseven-backend-dev'...
+[2025-11-07 15:24:54] [OK] Dev Web App created
+[2025-11-07 15:24:54] -> Creating Prod Web App 'elevenseven-backend-prod'...
+[2025-11-07 15:25:21] [OK] Prod Web App created
+[2025-11-07 15:25:21] -> Creating Static Web App 'elevenseven-backend-frontend'...
+[2025-11-07 15:25:26] [OK] Static Web App created
+[2025-11-07 15:25:28] -> Configuring dev app environment variables...
+[2025-11-07 15:25:33] [OK] Dev app environment configured
+[2025-11-07 15:25:33] -> Configuring prod app environment variables...
+[2025-11-07 15:25:36] [OK] Prod app environment configured
+[2025-11-07 15:25:36] [OK] All Azure resources provisioned
+DONE:Provisioning Azure resources
+[2025-11-07 15:25:36] 
+PROGRESS:Creating GitHub workflows
+[2025-11-07 15:25:36] -> Creating GitHub workflows...
+[2025-11-07 15:25:36] [OK] Created deploy-dev.yml
+[2025-11-07 15:25:36] [OK] Created deploy-prod.yml
+[2025-11-07 15:25:36] [OK] GitHub workflows created
+DONE:Creating GitHub workflows
+[2025-11-07 15:25:36] 
+PROGRESS:Setting Azure publish profiles
+[2025-11-07 15:25:36] -> Setting Azure publish profiles...
+[2025-11-07 15:25:36] -> Getting dev app publish profile...
+[2025-11-07 15:25:37] -> Setting AZURE_DEV_PUBLISH_PROFILE secret...
+[2025-11-07 15:25:38] [OK] AZURE_DEV_PUBLISH_PROFILE secret set
+[2025-11-07 15:25:38] -> Getting prod app publish profile...
+[2025-11-07 15:25:39] -> Setting AZURE_PROD_PUBLISH_PROFILE secret...
+[2025-11-07 15:25:39] [OK] AZURE_PROD_PUBLISH_PROFILE secret set
+[2025-11-07 15:25:39] [OK] Azure publish profiles set
+DONE:Setting Azure publish profiles
+[2025-11-07 15:25:39] 
+PROGRESS:Creating coming soon pages
+[2025-11-07 15:25:39] -> Creating coming soon pages...
+[2025-11-07 15:25:39] [OK] Created coming-soon-dev.html
+[2025-11-07 15:25:39] [OK] Created coming-soon-prod.html
+[2025-11-07 15:25:40] [OK] Coming soon pages created
+DONE:Creating coming soon pages
+[2025-11-07 15:25:40] 
 PROGRESS:Creating virtual environment
 DONE:Creating virtual environment
 PROGRESS:Installing dependencies
@@ -26,8 +71,6 @@ PROGRESS:Initializing database
 DONE:Initializing database
 PROGRESS:Building welcome page
 DONE:Building welcome page
-PROGRESS:Configuring GitHub workflows
-DONE:Configuring GitHub workflows
 PROGRESS:Securing configuration file
 DONE:Securing configuration file
 PROGRESS:Setting API key secrets
