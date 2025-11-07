@@ -577,6 +577,7 @@ class AutomationService:
         if not publish_profile:
             print("[WARN] Skipping Azure secrets - publish profile not available")
             print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually in GitHub")
+            self._log_progress("DONE:Setting Azure deployment secrets")
             return
         
         # Set publish profile as GitHub secret
@@ -594,6 +595,7 @@ class AutomationService:
         except Exception as e:
             print(f"[WARN] Failed to set Azure secrets: {e}")
             print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually")
+            self._log_progress("DONE:Setting Azure deployment secrets")
     
     def commit_and_push(self):
         """Commit and push to GitHub."""
