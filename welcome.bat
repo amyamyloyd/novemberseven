@@ -51,19 +51,30 @@ if %errorlevel% equ 0 (
     goto OPEN_BROWSER
 )
 
-REM Start setup server
+REM Start setup server in foreground (visible output)
 echo.
 echo Starting SaltAIr setup server...
-start /B python setup_server.py
+echo [IMPORTANT] Keep this terminal window open - you'll see all setup progress here
+echo.
 
-REM Wait for server to start
-timeout /t 3 /nobreak >nul
+REM Open browser first
+start http://localhost:8001/setup
+
+REM Wait a moment for browser to open
+timeout /t 2 /nobreak >nul
+
+REM Run server in foreground - all output visible
+python setup_server.py
+
+goto END
 
 :OPEN_BROWSER
-REM Open browser automatically
+REM Open browser if server already running
 start http://localhost:8001/setup
 
 echo.
 echo Browser should open automatically to the setup page.
 echo If not, visit: http://localhost:8001/setup
 echo.
+
+:END
