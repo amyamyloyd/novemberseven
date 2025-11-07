@@ -28,3 +28,4 @@ jobs:
       with:
         app-name: 'elevenseven-backend-prod'
         publish-profile: ${{ secrets.AZURE_PROD_PUBLISH_PROFILE }}
+        package: .
