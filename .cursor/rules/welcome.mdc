@@ -5,100 +5,160 @@ alwaysApply: true
 
 ## When User Says "Run the Welcome Script" or "Run welcome.bat"
 
-### Step 1: Check Python Installation
+### Overview
 
-**ALWAYS check if Python 3.11+ is installed BEFORE running the script:**
+The `welcome.bat` script is **fully automated** - it handles all tool installation automatically.
+User only approves UAC prompts (4-5 times max). No manual steps required.
 
-```bash
-python --version
-```
+### How to Run
 
-**If Python is NOT installed or not in PATH:**
-
-1. **Install Python using Windows Package Manager:**
-   ```powershell
-   winget install -e --id Python.Python.3.12
-   ```
-   
-2. **Wait for installation to complete** (monitor output or wait 30-60 seconds)
-
-3. **Verify installation:**
-   ```bash
-   python --version
-   ```
-   Must show Python 3.11.x or 3.12.x
-
-4. **If verification fails:**
-   - Check if Python was added to PATH
-   - May require restarting terminal/Cursor
-   - If still failing, manually guide user to python.org/downloads
-
-### Step 2: Run welcome.bat
-
-**Once Python is confirmed installed:**
-
-The file is `welcome.bat` in the repository root.
-
-**CRITICAL - ALWAYS run from workspace root on first attempt:**
+**CRITICAL - Run from workspace root:**
 
 1. **Change to workspace directory FIRST:**
    ```powershell
-   cd <workspace_path>
+   cd /Users/amyamylloyd/boot_lang
    ```
-   Replace `<workspace_path>` with the actual workspace path from user_info.
-   
-2. **Then run the script in CMD (separate command):**
+   (Use actual workspace path from user_info)
+
+2. **Run the script in CMD:**
    ```powershell
    cmd /c welcome.bat
    ```
 
 **RULES:**
-- **DO NOT** try multiple approaches. Change to workspace directory FIRST, always.
-- **DO NOT** try to run `welcome.bat` before changing directory.
-- **DO NOT** use `&&` operator in PowerShell - it doesn't work. Run as TWO separate commands.
-- **DO NOT** make multiple failed attempts - get it right on the first try.
+- **DO NOT** use `&&` operator in PowerShell - run as TWO separate commands
+- **DO NOT** try multiple approaches - get it right on the first attempt
+- **ALWAYS** change to workspace directory before running
 
-**Expected behavior:**
-- Script checks if setup server is running on port 8001
-- If not running, starts `python setup_server.py` in background
-- Opens browser to http://localhost:8001/setup
-- If already running, just opens browser
+### What the Script Does (Fully Automated)
 
-**IMPORTANT:** The setup will auto-install GitHub CLI and Azure CLI if missing via `winget`.
+**Step 1: Find winget**
+- Searches PATH for winget
+- If not in PATH, searches common Windows locations
+- If not found, tells user to install "App Installer" from Microsoft Store
 
-### Step 3: Monitor for Errors
+**Step 2: Auto-install Python (if missing)**
+- Checks if `python --version` works
+- If not → runs `winget install Python.Python.3.12` automatically
+- User approves UAC prompt
+- Script restarts shell to refresh PATH
 
-**If script fails with "Python not found":**
-- Go back to Step 1 and install Python
+**Step 3: Auto-install CLI tools (if missing)**
+- Runs `install_tools.py` to check for Git, GitHub CLI, Azure CLI
+- If any missing → installs them via winget automatically
+- User approves UAC prompts (one per tool)
+- Script restarts shell to refresh PATH
 
-**If script fails with port conflict:**
-- Check what's using port 8001: `netstat -ano | findstr ":8001"`
-- Kill the process or use different port
+**Step 4: Start setup server**
+- Starts `setup_server.py` in **foreground** (not background)
+- All output visible in Cursor terminal
+- Browser opens automatically to http://localhost:8001/setup
+
+### What User Sees in Cursor Terminal
+
+```
+[CHECK] Locating winget...
+[OK] winget found in PATH
+
+[CHECK] Checking Python installation...
+[OK] Python found
+
+[CHECK] Checking required tools...
+[OK] Git found
+[OK] GitHub CLI found
+[OK] Azure CLI found
+[OK] All required tools are installed
+
+[START] Starting SaltAIr setup server...
+============================================================
+  IMPORTANT: Keep this terminal window open
+  You'll see all setup progress here in real-time
+============================================================
+
+Boot_Lang Configuration Webpage
+Open your browser to: http://localhost:8001/setup
+...
+```
+
+### User Interaction Required
+
+**ONLY these actions from user:**
+1. Run `cmd /c welcome.bat`
+2. Approve UAC prompts when they appear (4-5 max)
+3. Keep Cursor terminal window open
+4. Fill out setup form in browser
+5. Watch progress in Cursor terminal
+
+**NO manual installation of anything. Script handles it all.**
+
+### After Setup Form Submission
+
+**What happens:**
+- Form triggers `automation_service.py` in background thread
+- All output appears in Cursor terminal in real-time:
+  - CLI authentication (gh auth login, az login)
+  - Git setup
+  - Virtual environment creation
+  - Dependencies installation
+  - Database initialization
+  - Azure deployment
+  - GitHub Actions setup
+- Takes 15-25 minutes
+- "Setup Complete!" message when done
+
+### Troubleshooting
+
+**If script fails with "winget not found":**
+- Install "App Installer" from Microsoft Store
+- Or update Windows to latest version (winget comes pre-installed)
+
+**If Python installation fails:**
+- User needs to approve UAC prompt
+- May need to run terminal as administrator
+
+**If CLI tool installation fails:**
+- User needs to approve UAC prompts (one per tool)
+- Check if antivirus is blocking winget
+
+**If setup server doesn't start:**
+- Check if port 8001 is already in use
+- Kill process: `netstat -ano | findstr ":8001"` then `taskkill /PID <pid> /F`
 
 **If browser doesn't open:**
 - Tell user to manually visit: http://localhost:8001/setup
 
-### Step 4: Next Steps After Setup Form
+### Important Notes
 
-**After user submits the setup form:**
-- The form triggers `automation.sh` automatically
-- Monitor for completion (15-20 minutes)
-- User will see Welcome screen when done
+- **Script is FULLY AUTOMATED** - no manual installation steps
+- **Terminal must stay open** - all output goes there
+- **UAC prompts are normal** - user must approve them
+- **Shell restart is automatic** - script handles it
+- **DO NOT run `setup_server.py` manually** - script does it
+- **DO NOT close terminal** - you'll lose all output
 
-## Important Notes
+### Alternative Commands User Might Use
 
-- **CRITICAL:** Change to workspace directory BEFORE running welcome.bat - no exceptions, no trial-and-error
-- **DO NOT** skip the Python check - it will always fail without it
-- **DO NOT** assume Python is installed on fresh Windows machines
-- **DO NOT** try multiple command approaches - get it right on the first attempt
-- **ALWAYS** verify Python version after installation
-- The script handles server startup automatically - don't manually start `setup_server.py` unless the script fails
+All these trigger the same automated flow:
+- "run welcome script"
+- "run welcome.bat"
+- "start setup"
+- "open setup form"
+- "run the welcome script"
 
-## Alternative Commands User Might Use
+Always run: `cmd /c welcome.bat` from workspace root.
 
-- "run welcome script" → Run welcome.bat
-- "start setup" → Run welcome.bat  
-- "open setup form" → Run welcome.bat
-- "run the welcome script" → Run welcome.bat
+### Files Involved
 
-All of these should trigger the same flow: Check Python → Install if needed → Run welcome.bat
+- `welcome.bat` (root) - Main entry point, auto-installs everything
+- `install_tools.py` - Checks/installs Git, GitHub CLI, Azure CLI
+- `setup_server.py` - HTTP server for setup form (port 8001)
+- `automation_service.py` - Background automation after form submit
+- `user_config.json` - Generated from form data
+- `setup_progress.log` - Progress log file
+
+### Expected Timeline
+
+- Tool installation: 2-5 minutes (if tools missing)
+- Setup form: 1-2 minutes (user fills out)
+- Automation: 15-25 minutes (GitHub/Azure setup, deployment)
+- Total: ~20-30 minutes for fresh Windows machine
