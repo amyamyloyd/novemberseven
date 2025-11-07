@@ -36,3 +36,4 @@ jobs:
         app-name: 'elevenseven-backend-prod'
         publish-profile: ${{ secrets.AZURE_PROD_PUBLISH_PROFILE }}
         package: './deploy'
+        startup-command: 'python -m uvicorn app:app --host 0.0.0.0 --port 8000'
