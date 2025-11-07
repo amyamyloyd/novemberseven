@@ -33,8 +33,16 @@ class AutomationService:
         with open(self.config_path, 'w', encoding='utf-8') as f:
             json.dump(self.config, f, indent=2)
     
+    def _log(self, message: str):
+        """Log message with timestamp to console and file."""
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        formatted = f"[{timestamp}] {message}"
+        print(formatted)
+        with open(self.progress_log, 'a', encoding='utf-8') as f:
+            f.write(f"{formatted}\n")
+    
     def _log_progress(self, message: str):
-        """Log progress to file."""
+        """Log progress to file (for /progress endpoint)."""
         with open(self.progress_log, 'a', encoding='utf-8') as f:
             f.write(f"{message}\n")
     
@@ -97,34 +105,6 @@ class AutomationService:
         ]
         
         for path in common_paths:
-            if os.path.exists(path):
-                return path
-        
-        return None
-    
-    def _find_cursor_command(self):
-        """Find cursor CLI command path."""
-        # Try PATH first
-        cursor_path = shutil.which('cursor')
-        if cursor_path:
-            return cursor_path
-        
-        # Try app bundle paths
-        if self.is_windows:
-            # Windows paths
-            possible_paths = [
-                rf"C:\Users\{os.getenv('USERNAME')}\AppData\Local\Programs\cursor\cursor.exe",
-                r"C:\Program Files\Cursor\cursor.exe",
-                r"C:\Program Files (x86)\Cursor\cursor.exe"
-            ]
-        else:
-            # Mac paths
-            possible_paths = [
-                "/Applications/Cursor.app/Contents/Resources/app/bin/cursor",
-                os.path.expanduser("~/Applications/Cursor.app/Contents/Resources/app/bin/cursor")
-            ]
-        
-        for path in possible_paths:
             if os.path.exists(path):
                 return path
         
@@ -212,216 +192,36 @@ class AutomationService:
         
         return None
     
-    def _install_cursor_extension(self, extension_id: str) -> bool:
-        """Install a Cursor extension via command line."""
-        cursor_cmd = self._find_cursor_command()
-        
-        if not cursor_cmd:
-            print("[ERROR] 'cursor' command not found")
-            print("       Please ensure Cursor is installed")
-            return False
-        
-        try:
-            result = subprocess.run(
-                [cursor_cmd, "--install-extension", extension_id],
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
-            
-            if result.returncode == 0:
-                print(f"[OK] Installed extension: {extension_id}")
-                return True
-            else:
-                print(f"[ERROR] Failed to install {extension_id}: {result.stderr}")
-                return False
-                
-        except subprocess.TimeoutExpired:
-            print(f"[ERROR] Installation timed out for {extension_id}")
-            return False
-        except Exception as e:
-            print(f"[ERROR] Failed to install {extension_id}: {str(e)}")
-            return False
-    
-    def _install_cli_tool(self, tool_name: str, install_cmd: list) -> bool:
-        """Install CLI tool with visible output and timeout."""
-        print(f"-> Installing {tool_name}...")
-        self._log_progress(f"PROGRESS:Installing {tool_name}")
-        
-        try:
-            # Run with visible output and timeout
-            process = subprocess.Popen(
-                install_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding='utf-8',
-                errors='replace'
-            )
-            
-            # Stream output and parse progress
-            import re
-            output_lines = []
-            for line in process.stdout:
-                try:
-                    clean_line = line.rstrip()
-                    # Sanitize for console output to avoid charmap errors
-                    safe_line = clean_line.encode('ascii', errors='replace').decode('ascii')
-                    output_lines.append(safe_line.lower())
-                    
-                    # Print and log safely
-                    try:
-                        print(f"   {safe_line}")
-                    except (UnicodeEncodeError, UnicodeDecodeError):
-                        pass  # Skip if still problematic
-                    
-                    self._log_progress(safe_line)
-                    
-                    # Parse download progress for progress bar (e.g., "15.3 MB / 64.3 MB")
-                    if 'MB' in safe_line and '/' in safe_line:
-                        match = re.search(r'([\d.]+)\s*MB\s*/\s*([\d.]+)\s*MB', safe_line)
-                        if match:
-                            current_mb = float(match.group(1))
-                            total_mb = float(match.group(2))
-                            if total_mb > 0:
-                                percent = int((current_mb / total_mb) * 100)
-                                self._log_progress(f"DOWNLOAD_PROGRESS:{tool_name}:{percent}")
-                except Exception:
-                    # Skip problematic lines
-                    continue
-            
-            # Wait with timeout
-            try:
-                process.wait(timeout=120)  # 2 minute timeout
-            except subprocess.TimeoutExpired:
-                process.kill()
-                print(f"[ERROR] {tool_name} installation timed out")
-                self._log_progress(f"ERROR:{tool_name} installation timed out")
-                return False
-            
-            # Check if successful or already installed
-            output_text = ' '.join(output_lines)
-            already_installed = any(indicator in output_text for indicator in [
-                'already installed',
-                'no available upgrade',
-                'successfully installed',
-                'found an existing package'
-            ])
-            
-            if process.returncode == 0 or already_installed:
-                print(f"[OK] {tool_name} installed successfully")
-                self._log_progress(f"DONE:Installing {tool_name}")
-                return True
-            else:
-                print(f"[ERROR] {tool_name} installation failed (exit code {process.returncode})")
-                self._log_progress(f"ERROR:{tool_name} installation failed")
-                return False
-                
-        except Exception as e:
-            print(f"[ERROR] Failed to install {tool_name}: {str(e)}")
-            self._log_progress(f"ERROR:{tool_name} installation failed: {str(e)}")
-            return False
-    
     def install_cli_tools(self):
-        """Install CLI tools and extensions."""
-        print("==================================================")
-        print("  [SETUP] Installing CLI Tools")
-        print("==================================================")
-        print("")
+        """Verify CLI tools are installed (install_tools.py handles installation)."""
+        self._log("==================================================")
+        self._log("  [VERIFY] Checking CLI Tools")
+        self._log("==================================================")
+        self._log("")
         
-        # Install Azure extension (works, provides az CLI)
-        print("-> Installing Azure extension...")
-        az_ext_success = self._install_cursor_extension("ms-vscode.azurecli")
-        
-        if not az_ext_success:
-            print("[WARN] Failed to install Azure extension, will try system CLI")
-        
-        # Install GitHub CLI (system-level)
-        gh_installed = shutil.which('gh') is not None
-        
-        if not gh_installed:
-            print("GitHub CLI not found, installing...")
-            
-            if self.is_windows:
-                # Windows: use winget
-                gh_success = self._install_cli_tool(
-                    "GitHub CLI",
-                    ['winget', 'install', '-e', '--id', 'GitHub.cli', '--accept-source-agreements', '--accept-package-agreements']
-                )
-            else:
-                # Mac: use brew
-                gh_success = self._install_cli_tool(
-                    "GitHub CLI",
-                    ['brew', 'install', 'gh']
-                )
-            
-            if not gh_success:
-                print("")
-                print("[ERROR] GitHub CLI installation failed")
-                print("[INFO] Please install manually:")
-                if self.is_windows:
-                    print("       winget install GitHub.cli")
-                else:
-                    print("       brew install gh")
-                return False
-        else:
-            print("[OK] GitHub CLI already installed")
-        
-        # Install Azure CLI (system-level)
-        az_installed = shutil.which('az') is not None
-        
-        if not az_installed:
-            print("Azure CLI not found, installing...")
-            
-            if self.is_windows:
-                # Windows: use winget
-                az_success = self._install_cli_tool(
-                    "Azure CLI",
-                    ['winget', 'install', '-e', '--id', 'Microsoft.AzureCLI', '--accept-source-agreements', '--accept-package-agreements']
-                )
-            else:
-                # Mac: use brew
-                az_success = self._install_cli_tool(
-                    "Azure CLI",
-                    ['brew', 'install', 'azure-cli']
-                )
-            
-            if not az_success:
-                print("")
-                print("[ERROR] Azure CLI installation failed")
-                print("[INFO] Please install manually:")
-                if self.is_windows:
-                    print("       winget install Microsoft.AzureCLI")
-                else:
-                    print("       brew install azure-cli")
-                return False
-        else:
-            print("[OK] Azure CLI already installed")
-        
-        # Verify both CLIs work
-        print("")
-        print("-> Verifying CLI tools...")
-        self._log_progress("Verifying CLI tools...")
-        
+        # Verify GitHub CLI
         gh_cmd = self._find_gh_command()
-        az_cmd = self._find_az_command()
-        
         if not gh_cmd:
-            print("[ERROR] 'gh' command not available after installation")
-            self._log_progress("ERROR:'gh' command not available")
+            self._log("[ERROR] GitHub CLI (gh) not found")
+            self._log("[ERROR] This should have been installed by welcome script")
+            self._log_progress("ERROR:GitHub CLI not found")
             return False
-        else:
-            print("[OK] GitHub CLI available")
-            self._log_progress("GitHub CLI verified")
         
+        self._log("[OK] GitHub CLI found")
+        self._log_progress("GitHub CLI verified")
+        
+        # Verify Azure CLI
+        az_cmd = self._find_az_command()
         if not az_cmd:
-            print("[WARN] 'az' command not found - may need PATH refresh")
-            self._log_progress("WARN:'az' command not found")
-        else:
-            print("[OK] Azure CLI available")
-            self._log_progress("Azure CLI verified")
+            self._log("[ERROR] Azure CLI (az) not found")
+            self._log("[ERROR] This should have been installed by welcome script")
+            self._log_progress("ERROR:Azure CLI not found")
+            return False
         
-        print("")
+        self._log("[OK] Azure CLI found")
+        self._log_progress("Azure CLI verified")
+        
+        self._log("")
         return True
     
     def authenticate_github(self):
