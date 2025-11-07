@@ -242,18 +242,33 @@ class AutomationService:
             self._log("")
             return True
         
-        # Authenticate - DO NOT suppress output, user needs to see prompts
+        # Authenticate with device code - capture output to show in browser
         try:
-            # Run interactively - let output flow to user
-            result = subprocess.run([gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
-            self._log("")
-            self._log("[OK] GitHub CLI authenticated")
-            self._log("")
-            return True
-        except subprocess.CalledProcessError:
-            self._log("[ERROR] GitHub authentication failed")
-            self._log("Please try again or check your network connection")
-            return False
+            # Run and capture output to display in browser
+            process = subprocess.Popen(
+                [gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            
+            # Stream output to browser in real-time
+            for line in process.stdout:
+                clean_line = line.rstrip()
+                self._log(clean_line)
+            
+            process.wait()
+            
+            if process.returncode == 0:
+                self._log("")
+                self._log("[OK] GitHub CLI authenticated")
+                self._log("")
+                return True
+            else:
+                self._log("[ERROR] GitHub authentication failed")
+                return False
+                
         except Exception as e:
             self._log(f"[ERROR] GitHub authentication error: {str(e)}")
             return False
@@ -276,18 +291,33 @@ class AutomationService:
             self._log("")
             return True
         
-        # Authenticate - DO NOT suppress output, user needs to see prompts
+        # Authenticate with device code - capture output to show in browser
         try:
-            # Run interactively - let output flow to user
-            result = subprocess.run([az_cmd, 'login', '--use-device-code'], check=True)
-            self._log("")
-            self._log("[OK] Azure CLI authenticated")
-            self._log("")
-            return True
-        except subprocess.CalledProcessError:
-            self._log("[ERROR] Azure authentication failed")
-            self._log("Please try again or check your network connection")
-            return False
+            # Run and capture output to display in browser
+            process = subprocess.Popen(
+                [az_cmd, 'login', '--use-device-code'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+            
+            # Stream output to browser in real-time
+            for line in process.stdout:
+                clean_line = line.rstrip()
+                self._log(clean_line)
+            
+            process.wait()
+            
+            if process.returncode == 0:
+                self._log("")
+                self._log("[OK] Azure CLI authenticated")
+                self._log("")
+                return True
+            else:
+                self._log("[ERROR] Azure authentication failed")
+                return False
+                
         except Exception as e:
             self._log(f"[ERROR] Azure authentication error: {str(e)}")
             return False
