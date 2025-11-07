@@ -458,58 +458,55 @@ class AutomationService:
         self._log("")
     
     def create_github_workflows(self):
-        """Create GitHub Actions workflow file for prod deployment from main branch."""
-        self._log_progress("PROGRESS:Creating GitHub workflow")
-        self._log("-> Creating GitHub workflow...")
+        """Set up Azure native GitHub deployment (no GitHub Actions needed)."""
+        self._log_progress("PROGRESS:Setting up Azure deployment")
+        self._log("-> Setting up Azure native GitHub deployment...")
         
-        # Create .github/workflows directory
-        workflows_dir = Path('.github/workflows')
-        workflows_dir.mkdir(parents=True, exist_ok=True)
+        az_cmd = self._find_az_command()
+        gh_cmd = self._find_gh_command()
+        
+        if not az_cmd or not gh_cmd:
+            self._log("[WARN] Azure CLI or GitHub CLI not found - skipping deployment setup")
+            self._log("[WARN] You'll need to set up deployment manually in Azure Portal")
+            self._log_progress("DONE:Setting up Azure deployment")
+            return
         
         app_service_name = self.config['azure_settings']['app_service_name']
+        resource_group = self.config['azure_settings']['resource_group']
+        github_repo = self.config['git_deployment']['github_repo_url']
         
-        # Create deploy-prod.yml (only prod, deploys from main)
-        deploy_prod_yml = workflows_dir / 'deploy-prod.yml'
-        deploy_prod_content = f"""name: Deploy to Azure Prod
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: '{app_service_name}'
-        package: '.'
-"""
-        deploy_prod_yml.write_text(deploy_prod_content, encoding='utf-8')
-        self._log("[OK] Created deploy-prod.yml")
+        # Get GitHub token
+        try:
+            result = self._run_command([gh_cmd, 'auth', 'token'], capture_output=True, check=False)
+            if result and result.returncode == 0:
+                github_token = result.stdout.strip()
+            else:
+                self._log("[WARN] Could not get GitHub token - skipping deployment setup")
+                self._log_progress("DONE:Setting up Azure deployment")
+                return
+        except:
+            self._log("[WARN] Could not get GitHub token - skipping deployment setup")
+            self._log_progress("DONE:Setting up Azure deployment")
+            return
         
-        # Remove deploy-dev.yml if it exists
-        deploy_dev_yml = workflows_dir / 'deploy-dev.yml'
-        if deploy_dev_yml.exists():
-            deploy_dev_yml.unlink()
-            self._log("[OK] Removed deploy-dev.yml (dev not needed)")
+        # Configure Azure to deploy from GitHub
+        self._log("-> Configuring Azure to deploy from GitHub...")
+        try:
+            self._run_command([
+                az_cmd, 'webapp', 'deployment', 'source', 'config',
+                '--name', app_service_name,
+                '--resource-group', resource_group,
+                '--repo-url', github_repo,
+                '--branch', 'main',
+                '--manual-integration',
+                '--git-token', github_token
+            ], check=False)
+            self._log("[OK] Azure deployment configured")
+        except Exception as e:
+            self._log(f"[WARN] Failed to configure deployment: {e}")
+            self._log("[WARN] You can set this up manually in Azure Portal > Deployment Center")
         
-        # Stage workflow files
-        self._run_command(['git', 'add', '.github/workflows/'], check=False)
-        
-        self._log("[OK] GitHub workflow created")
-        self._log_progress("DONE:Creating GitHub workflows")
+        self._log_progress("DONE:Setting up Azure deployment")
         self._log("")
     
     def set_azure_publish_profiles(self):
@@ -830,7 +827,14 @@ jobs:
         
         project_name = self.config['user_identity']['project_name']
         
+        # Ensure user_config.json is not staged (safety check)
+        self._run_command(['git', 'reset', 'user_config.json'], check=False)
+        self._run_command(['git', 'restore', '--staged', 'user_config.json'], check=False)
+        
+        # Add all files except user_config.json
         self._run_command(['git', 'add', '.'], check=False)
+        self._run_command(['git', 'reset', 'user_config.json'], check=False)
+        
         self._run_command(['git', 'commit', '-m', f'Initial Boot_Lang setup: {project_name}'], check=False)
         self._run_command(['git', 'push', '-u', 'origin', 'main', '--force'], check=False)
         

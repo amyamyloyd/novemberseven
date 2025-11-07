@@ -1,58 +1,56 @@
 Starting automation...
-[2025-11-07 15:55:57] ==================================================
-[2025-11-07 15:55:57]   [VERIFY] Checking CLI Tools
-[2025-11-07 15:55:57] ==================================================
-[2025-11-07 15:55:57] 
-[2025-11-07 15:55:57] [OK] GitHub CLI found
+[2025-11-07 17:03:14] ==================================================
+[2025-11-07 17:03:14]   [VERIFY] Checking CLI Tools
+[2025-11-07 17:03:14] ==================================================
+[2025-11-07 17:03:14] 
+[2025-11-07 17:03:14] [OK] GitHub CLI found
 GitHub CLI verified
-[2025-11-07 15:55:57] [OK] Azure CLI found
+[2025-11-07 17:03:14] [OK] Azure CLI found
 Azure CLI verified
-[2025-11-07 15:55:57] 
-[2025-11-07 15:55:57] -> Authenticating GitHub CLI...
-[2025-11-07 15:55:57]   (Browser will open for authentication)
-[2025-11-07 15:55:57] 
-[2025-11-07 15:55:57] [OK] GitHub CLI already authenticated
-[2025-11-07 15:55:57] 
-[2025-11-07 15:55:57] -> Authenticating Azure CLI...
-[2025-11-07 15:55:57]   (Browser will open for authentication)
-[2025-11-07 15:55:57] 
-[2025-11-07 15:55:58] [OK] Azure CLI already authenticated
-[2025-11-07 15:55:58] 
+[2025-11-07 17:03:14] 
+[2025-11-07 17:03:14] -> Authenticating GitHub CLI...
+[2025-11-07 17:03:14]   (Browser will open for authentication)
+[2025-11-07 17:03:14] 
+[2025-11-07 17:03:15] [OK] GitHub CLI already authenticated
+[2025-11-07 17:03:15] 
+[2025-11-07 17:03:15] -> Authenticating Azure CLI...
+[2025-11-07 17:03:15]   (Browser will open for authentication)
+[2025-11-07 17:03:15] 
+[2025-11-07 17:03:16] [OK] Azure CLI already authenticated
+[2025-11-07 17:03:16] 
 PROGRESS:Provisioning Azure resources
-[2025-11-07 15:55:59] -> Provisioning Azure resources...
-[2025-11-07 15:55:59] -> Checking if resource group exists...
-[2025-11-07 15:56:00] -> Creating resource group 'novseven-rg'...
-[2025-11-07 15:56:01] [OK] Resource group created
-[2025-11-07 15:56:01] -> Creating App Service plan 'novseven-backend-plan'...
-[2025-11-07 15:56:08] [OK] App Service plan created (Basic B1 - free tier eligible)
-[2025-11-07 15:56:08] -> Creating Prod Web App 'novseven-backend'...
-[2025-11-07 15:56:32] [OK] Prod Web App created
-[2025-11-07 15:56:32] -> Creating Static Web App 'novseven-backend-frontend'...
-[2025-11-07 15:56:36] [OK] Static Web App created
-[2025-11-07 15:56:38] -> Configuring prod app environment variables...
-[2025-11-07 15:56:41] [OK] Prod app environment configured
-[2025-11-07 15:56:41] [OK] All Azure resources provisioned
+[2025-11-07 17:03:16] -> Provisioning Azure resources...
+[2025-11-07 17:03:16] -> Checking if resource group exists...
+[2025-11-07 17:03:18] -> Creating resource group 'sevennov-rg'...
+[2025-11-07 17:03:19] [OK] Resource group created
+[2025-11-07 17:03:19] -> Creating App Service plan 'sevennov-backend-plan'...
+[2025-11-07 17:03:27] [OK] App Service plan created (Basic B1 - free tier eligible)
+[2025-11-07 17:03:27] -> Creating Prod Web App 'sevennov-backend'...
+[2025-11-07 17:03:52] [OK] Prod Web App created
+[2025-11-07 17:03:52] -> Creating Static Web App 'sevennov-backend-frontend'...
+[2025-11-07 17:03:56] [OK] Static Web App created
+[2025-11-07 17:03:58] -> Configuring prod app environment variables...
+[2025-11-07 17:04:00] [OK] Prod app environment configured
+[2025-11-07 17:04:00] [OK] All Azure resources provisioned
 DONE:Provisioning Azure resources
-[2025-11-07 15:56:41] 
+[2025-11-07 17:04:00] 
 PROGRESS:Creating GitHub workflow
-[2025-11-07 15:56:41] -> Creating GitHub workflow...
-[2025-11-07 15:56:41] [OK] Created deploy-prod.yml
-[2025-11-07 15:56:41] [OK] Removed deploy-dev.yml (dev not needed)
-[2025-11-07 15:56:41] [OK] GitHub workflow created
+[2025-11-07 17:04:00] -> Creating GitHub workflow...
+[2025-11-07 17:04:00] [OK] Created deploy-prod.yml
+[2025-11-07 17:04:00] [OK] GitHub workflow created
 DONE:Creating GitHub workflows
-[2025-11-07 15:56:41] 
+[2025-11-07 17:04:00] 
 PROGRESS:Setting Azure credentials
-[2025-11-07 15:56:41] -> Setting Azure credentials for GitHub Actions...
-[2025-11-07 15:56:41] [OK] Using Azure service principal authentication (AZURE_CREDENTIALS)
+[2025-11-07 17:04:00] -> Setting Azure credentials for GitHub Actions...
+[2025-11-07 17:04:00] [OK] Using Azure service principal authentication (AZURE_CREDENTIALS)
 DONE:Setting Azure credentials
-[2025-11-07 15:56:41] 
+[2025-11-07 17:04:00] 
 PROGRESS:Creating coming soon page
-[2025-11-07 15:56:41] -> Creating coming soon page...
-[2025-11-07 15:56:41] [OK] Created coming-soon-prod.html
-[2025-11-07 15:56:41] [OK] Removed coming-soon-dev.html (dev not needed)
-[2025-11-07 15:56:41] [OK] Coming soon page created
+[2025-11-07 17:04:00] -> Creating coming soon page...
+[2025-11-07 17:04:00] [OK] Created coming-soon-prod.html
+[2025-11-07 17:04:00] [OK] Coming soon page created
 DONE:Creating coming soon page
-[2025-11-07 15:56:41] 
+[2025-11-07 17:04:00] 
 PROGRESS:Creating virtual environment
 DONE:Creating virtual environment
 PROGRESS:Installing dependencies
