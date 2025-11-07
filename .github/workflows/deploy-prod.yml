@@ -28,9 +28,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Create deployment package
+      run: |
+        zip -r deploy.zip . -x "*.git*" "*.pyc" "__pycache__/*" "venv/*" "node_modules/*" ".env" "*.log"
+    
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'novseven-backend'
-        package: '.'
-        startup-command: 'python -m uvicorn app:app --host 0.0.0.0 --port 8000'
+        package: './deploy.zip'
