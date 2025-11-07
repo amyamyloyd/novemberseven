@@ -7,6 +7,7 @@ import subprocess
 import sys
 import platform
 import shutil
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -14,9 +15,10 @@ from pathlib import Path
 class ToolInstaller:
     """Handles installation of required CLI tools."""
     
-    def __init__(self):
+    def __init__(self, winget_path=None):
         self.is_windows = platform.system() == 'Windows'
         self.log_file = 'setup_progress.log'
+        self.winget_cmd = winget_path  # Passed from welcome.bat
         self.required_tools = {
             'git': 'Git',
             'gh': 'GitHub CLI',
@@ -38,10 +40,17 @@ class ToolInstaller:
     def install_windows_tool(self, tool_name, winget_id):
         """Install tool via winget on Windows."""
         self.log(f"-> Installing {tool_name} via winget...")
+        
+        # Use winget path provided by welcome.bat
+        if not self.winget_cmd:
+            self.log("[ERROR] winget path not provided")
+            self.log("Please run welcome.bat instead of this script directly")
+            return False
+        
         try:
             # Run WITHOUT --silent so UAC prompts appear
             result = subprocess.run(
-                ['winget', 'install', '-e', '--id', winget_id],
+                [self.winget_cmd, 'install', '-e', '--id', winget_id],
                 capture_output=False,  # Show output to user
                 text=True
             )
@@ -128,7 +137,9 @@ class ToolInstaller:
 
 
 if __name__ == "__main__":
-    installer = ToolInstaller()
+    # Get winget path from command line argument (passed by welcome.bat)
+    winget_path = sys.argv[1] if len(sys.argv) > 1 else None
+    installer = ToolInstaller(winget_path)
     exit_code = installer.check_and_install()
     sys.exit(exit_code)
 

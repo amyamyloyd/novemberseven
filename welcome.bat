@@ -10,6 +10,50 @@ if exist "%TEMP%\saltair_restart.flag" (
     goto CHECK_TOOLS
 )
 
+REM Step -1: Find winget (may not be in PATH)
+echo.
+echo [CHECK] Locating winget...
+
+REM Try winget in PATH first
+winget --version >nul 2>&1
+if %errorlevel% equ 0 (
+    set "WINGET_CMD=winget"
+    echo [OK] winget found in PATH
+    goto CHECK_PYTHON
+)
+
+REM Not in PATH - search common locations
+echo [WARN] winget not in PATH - searching common locations...
+
+REM Check WindowsApps folder
+set "WINGET_CMD=%USERPROFILE%\AppData\Local\Microsoft\WindowsApps\winget.exe"
+if exist "%WINGET_CMD%" (
+    echo [OK] winget found at: %WINGET_CMD%
+    goto CHECK_PYTHON
+)
+
+REM Check Program Files
+for /d %%i in ("C:\Program Files\WindowsApps\Microsoft.DesktopAppInstaller_*") do (
+    if exist "%%i\winget.exe" (
+        set "WINGET_CMD=%%i\winget.exe"
+        echo [OK] winget found at: %%i\winget.exe
+        goto CHECK_PYTHON
+    )
+)
+
+REM Winget not found - error
+echo.
+echo [ERROR] winget not found
+echo.
+echo Please install "App Installer" from Microsoft Store:
+echo https://apps.microsoft.com/store/detail/app-installer/9NBLGGH4NNS1
+echo.
+echo Or update Windows to the latest version (winget comes pre-installed on Windows 10/11)
+pause
+exit /b 1
+
+:CHECK_PYTHON
+
 REM Step 0: Check and auto-install Python if missing
 echo.
 echo [CHECK] Checking Python installation...
@@ -21,7 +65,7 @@ if %errorlevel% neq 0 (
     echo.
     
     REM Auto-install Python via winget
-    winget install -e --id Python.Python.3.12
+    "%WINGET_CMD%" install -e --id Python.Python.3.12
     
     if %errorlevel% neq 0 (
         echo.
@@ -51,7 +95,7 @@ REM Step 1: Check and install required tools (Git, GitHub CLI, Azure CLI)
 echo.
 echo [CHECK] Checking required tools...
 echo.
-python install_tools.py
+python install_tools.py "%WINGET_CMD%"
 set INSTALL_EXIT=%errorlevel%
 
 if %INSTALL_EXIT%==1 (
