@@ -112,9 +112,6 @@ class AutomationService:
     
     def _find_gh_command(self):
         """Find GitHub CLI executable, refreshing PATH if needed."""
-        import winreg
-        import time
-        
         # Try PATH first
         gh_path = shutil.which('gh')
         if gh_path:
@@ -123,6 +120,9 @@ class AutomationService:
         # On Windows, refresh PATH from registry
         if self.is_windows:
             try:
+                import winreg
+                import time
+                
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
                                     r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
                 path_value, _ = winreg.QueryValueEx(key, 'Path')
@@ -153,9 +153,6 @@ class AutomationService:
     
     def _find_az_command(self):
         """Find Azure CLI executable, refreshing PATH if needed."""
-        import winreg
-        import time
-        
         # Try PATH first
         az_path = shutil.which('az')
         if az_path:
@@ -164,6 +161,9 @@ class AutomationService:
         # On Windows, refresh PATH from registry
         if self.is_windows:
             try:
+                import winreg
+                import time
+                
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
                                     r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
                 path_value, _ = winreg.QueryValueEx(key, 'Path')
