@@ -30,7 +30,18 @@ jobs:
     
     - name: Create deployment package
       run: |
-        zip -r deploy.zip . -x "*.git*" "*.pyc" "__pycache__/*" "venv/*" "node_modules/*" ".env" "*.log"
+        mkdir -p deploy_package
+        cp app.py deploy_package/
+        cp requirements.txt deploy_package/
+        cp -r templates deploy_package/ 2>/dev/null || true
+        cp -r agents deploy_package/ 2>/dev/null || true
+        cp database.py deploy_package/ 2>/dev/null || true
+        cp auth_utils.py deploy_package/ 2>/dev/null || true
+        cp poc_api.py deploy_package/ 2>/dev/null || true
+        cp user_management.py deploy_package/ 2>/dev/null || true
+        cd deploy_package
+        zip -r ../deploy.zip .
+        cd ..
     
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
