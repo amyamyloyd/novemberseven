@@ -29,11 +29,20 @@ jobs:
         cp -r . deploy/ || true
         cd deploy
         rm -rf .git venv node_modules frontend/node_modules __pycache__ *.pyc .env || true
+        zip -r ../deploy.zip . -x "*.git*" "*.pyc" "__pycache__/*"
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Install Azure CLI
+      run: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
     
     - name: Deploy to Azure Web App (prod)
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'elevenseven-backend-prod'
-        publish-profile: ${{ secrets.AZURE_PROD_PUBLISH_PROFILE }}
-        package: './deploy'
-        startup-command: 'python -m uvicorn app:app --host 0.0.0.0 --port 8000'
+      run: |
+        az webapp deployment source config-zip \
+          --resource-group elevenseven-rg \
+          --name elevenseven-backend-prod \
+          --src deploy.zip
