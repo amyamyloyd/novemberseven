@@ -1,5 +1,5 @@
 window.bootLangConfig = {
   userName: "Margaret Amelia",
-  projectName: "ElevenSeven",
-  githubUrl: "https://github.com/amyamyloyd/firstdeployyahoo.git"
+  projectName: "NovSeven",
+  githubUrl: "https://github.com/amyamyloyd/novemberseven.git"
 };

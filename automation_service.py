@@ -398,25 +398,11 @@ class AutomationService:
         ])
         self._log(f"[OK] App Service plan created (Basic B1 - free tier eligible)")
         
-        # Create Web App for dev environment
-        dev_app_name = f"{app_service_name}-dev"
-        self._log(f"-> Creating Dev Web App '{dev_app_name}'...")
+        # Create Web App for prod environment (only prod, no dev)
+        self._log(f"-> Creating Prod Web App '{app_service_name}'...")
         self._run_command([
             az_cmd, 'webapp', 'create',
-            '--name', dev_app_name,
-            '--resource-group', resource_group,
-            '--plan', plan_name,
-            '--runtime', 'PYTHON:3.11',
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Dev Web App created")
-        
-        # Create Web App for prod environment
-        prod_app_name = f"{app_service_name}-prod"
-        self._log(f"-> Creating Prod Web App '{prod_app_name}'...")
-        self._run_command([
-            az_cmd, 'webapp', 'create',
-            '--name', prod_app_name,
+            '--name', app_service_name,
             '--resource-group', resource_group,
             '--plan', plan_name,
             '--runtime', 'PYTHON:3.11',
@@ -446,27 +432,11 @@ class AutomationService:
         ], capture_output=True)
         static_web_app_url = f"https://{result.stdout.strip()}" if result and result.stdout.strip() else ""
         
-        # Configure environment variables for dev app
-        dev_app_name = f"{app_service_name}-dev"
-        self._log("-> Configuring dev app environment variables...")
-        self._run_command([
-            az_cmd, 'webapp', 'config', 'appsettings', 'set',
-            '--name', dev_app_name,
-            '--resource-group', resource_group,
-            '--settings',
-            'ENVIRONMENT=development',
-            f'PROJECT_NAME={project_name}',
-            f'OPENAI_API_KEY={openai_key}',
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Dev app environment configured")
-        
         # Configure environment variables for prod app
-        prod_app_name = f"{app_service_name}-prod"
         self._log("-> Configuring prod app environment variables...")
         self._run_command([
             az_cmd, 'webapp', 'config', 'appsettings', 'set',
-            '--name', prod_app_name,
+            '--name', app_service_name,
             '--resource-group', resource_group,
             '--settings',
             'ENVIRONMENT=production',
@@ -477,15 +447,10 @@ class AutomationService:
         self._log(f"[OK] Prod app environment configured")
         
         # Save URLs to config
-        backend_dev_url = f"https://{dev_app_name}.azurewebsites.net"
-        backend_prod_url = f"https://{prod_app_name}.azurewebsites.net"
+        backend_prod_url = f"https://{app_service_name}.azurewebsites.net"
         
-        self.config['azure_settings']['backend_dev_url'] = backend_dev_url
         self.config['azure_settings']['backend_prod_url'] = backend_prod_url
         self.config['azure_settings']['static_web_app_url'] = static_web_app_url
-        self.config['azure_settings']['dev_slot_url'] = backend_dev_url
-        self.config['azure_settings']['dev_app_name'] = dev_app_name
-        self.config['azure_settings']['prod_app_name'] = prod_app_name
         self._save_config()
         
         self._log("[OK] All Azure resources provisioned")
@@ -493,62 +458,24 @@ class AutomationService:
         self._log("")
     
     def create_github_workflows(self):
-        """Create GitHub Actions workflow files for dev and prod deployments."""
-        self._log_progress("PROGRESS:Creating GitHub workflows")
-        self._log("-> Creating GitHub workflows...")
+        """Create GitHub Actions workflow file for prod deployment from main branch."""
+        self._log_progress("PROGRESS:Creating GitHub workflow")
+        self._log("-> Creating GitHub workflow...")
         
         # Create .github/workflows directory
         workflows_dir = Path('.github/workflows')
         workflows_dir.mkdir(parents=True, exist_ok=True)
         
         app_service_name = self.config['azure_settings']['app_service_name']
-        dev_app_name = f"{app_service_name}-dev"
-        prod_app_name = f"{app_service_name}-prod"
         
-        # Create deploy-dev.yml
-        deploy_dev_yml = workflows_dir / 'deploy-dev.yml'
-        deploy_dev_content = f"""name: Deploy to Azure Dev App
-
-on:
-  push:
-    branches:
-      - dev
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Deploy to Azure Web App (dev)
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: '{dev_app_name}'
-        publish-profile: ${{{{ secrets.AZURE_DEV_PUBLISH_PROFILE }}}}
-"""
-        deploy_dev_yml.write_text(deploy_dev_content, encoding='utf-8')
-        self._log("[OK] Created deploy-dev.yml")
-        
-        # Create deploy-prod.yml
+        # Create deploy-prod.yml (only prod, deploys from main)
         deploy_prod_yml = workflows_dir / 'deploy-prod.yml'
-        deploy_prod_content = f"""name: Deploy to Azure Prod App
+        deploy_prod_content = f"""name: Deploy to Azure Prod
 
 on:
   push:
     branches:
-      - prod
+      - main
 
 jobs:
   deploy:
@@ -558,125 +485,48 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Azure Login
+      uses: azure/login@v1
       with:
-        python-version: '3.11'
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
     
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Deploy to Azure Web App (prod)
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: '{prod_app_name}'
-        publish-profile: ${{{{ secrets.AZURE_PROD_PUBLISH_PROFILE }}}}
+        app-name: '{app_service_name}'
+        package: '.'
 """
         deploy_prod_yml.write_text(deploy_prod_content, encoding='utf-8')
         self._log("[OK] Created deploy-prod.yml")
         
+        # Remove deploy-dev.yml if it exists
+        deploy_dev_yml = workflows_dir / 'deploy-dev.yml'
+        if deploy_dev_yml.exists():
+            deploy_dev_yml.unlink()
+            self._log("[OK] Removed deploy-dev.yml (dev not needed)")
+        
         # Stage workflow files
         self._run_command(['git', 'add', '.github/workflows/'], check=False)
         
-        self._log("[OK] GitHub workflows created")
+        self._log("[OK] GitHub workflow created")
         self._log_progress("DONE:Creating GitHub workflows")
         self._log("")
     
     def set_azure_publish_profiles(self):
-        """Get Azure publish profiles for dev and prod apps and set as GitHub secrets."""
-        self._log_progress("PROGRESS:Setting Azure publish profiles")
-        self._log("-> Setting Azure publish profiles...")
+        """Get Azure publish profile for prod app and set as GitHub secret (using Azure credentials instead)."""
+        self._log_progress("PROGRESS:Setting Azure credentials")
+        self._log("-> Setting Azure credentials for GitHub Actions...")
         
-        az_cmd = self._find_az_command()
-        if not az_cmd:
-            self._log("[ERROR] Azure CLI not found")
-            self._log_progress("ERROR:Azure CLI not found")
-            raise RuntimeError("Azure CLI not found")
-        
-        gh_cmd = self._find_gh_command()
-        if not gh_cmd:
-            self._log("[ERROR] GitHub CLI not found")
-            self._log_progress("ERROR:GitHub CLI not found")
-            raise RuntimeError("GitHub CLI not found")
-        
-        dev_app_name = self.config['azure_settings'].get('dev_app_name', f"{self.config['azure_settings']['app_service_name']}-dev")
-        prod_app_name = self.config['azure_settings'].get('prod_app_name', f"{self.config['azure_settings']['app_service_name']}-prod")
-        resource_group = self.config['azure_settings']['resource_group']
-        
-        # Get dev app publish profile
-        self._log("-> Getting dev app publish profile...")
-        result = self._run_command([
-            az_cmd, 'webapp', 'deployment', 'list-publishing-profiles',
-            '--name', dev_app_name,
-            '--resource-group', resource_group,
-            '--xml'
-        ], capture_output=True)
-        
-        if not result or result.returncode != 0:
-            self._log("[ERROR] Failed to get dev app publish profile")
-            self._log("[ERROR] Dev app must exist - provisioning may have failed")
-            self._log_progress("ERROR:Failed to get dev publish profile")
-            raise RuntimeError("Failed to get dev app publish profile")
-        
-        dev_profile = result.stdout.strip()
-        
-        # Set dev publish profile as GitHub secret
-        self._log("-> Setting AZURE_DEV_PUBLISH_PROFILE secret...")
-        proc = subprocess.Popen(
-            [gh_cmd, 'secret', 'set', 'AZURE_DEV_PUBLISH_PROFILE'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        proc.communicate(input=dev_profile.encode())
-        if proc.returncode != 0:
-            self._log("[ERROR] Failed to set AZURE_DEV_PUBLISH_PROFILE secret")
-            self._log_progress("ERROR:Failed to set dev publish profile secret")
-            raise RuntimeError("Failed to set AZURE_DEV_PUBLISH_PROFILE secret")
-        self._log("[OK] AZURE_DEV_PUBLISH_PROFILE secret set")
-        
-        # Get prod app publish profile
-        self._log("-> Getting prod app publish profile...")
-        result = self._run_command([
-            az_cmd, 'webapp', 'deployment', 'list-publishing-profiles',
-            '--name', prod_app_name,
-            '--resource-group', resource_group,
-            '--xml'
-        ], capture_output=True)
-        
-        if not result or result.returncode != 0:
-            self._log("[ERROR] Failed to get prod app publish profile")
-            self._log("[ERROR] Prod app must exist - provisioning may have failed")
-            self._log_progress("ERROR:Failed to get prod publish profile")
-            raise RuntimeError("Failed to get prod app publish profile")
-        
-        prod_profile = result.stdout.strip()
-        
-        # Set prod publish profile as GitHub secret
-        self._log("-> Setting AZURE_PROD_PUBLISH_PROFILE secret...")
-        proc = subprocess.Popen(
-            [gh_cmd, 'secret', 'set', 'AZURE_PROD_PUBLISH_PROFILE'],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        proc.communicate(input=prod_profile.encode())
-        if proc.returncode != 0:
-            self._log("[ERROR] Failed to set AZURE_PROD_PUBLISH_PROFILE secret")
-            self._log_progress("ERROR:Failed to set prod publish profile secret")
-            raise RuntimeError("Failed to set AZURE_PROD_PUBLISH_PROFILE secret")
-        self._log("[OK] AZURE_PROD_PUBLISH_PROFILE secret set")
-        
-        self._log("[OK] Azure publish profiles set")
-        self._log_progress("DONE:Setting Azure publish profiles")
+        # We're using Azure service principal (AZURE_CREDENTIALS) instead of publish profiles
+        # This was already set up, so we just confirm
+        self._log("[OK] Using Azure service principal authentication (AZURE_CREDENTIALS)")
+        self._log_progress("DONE:Setting Azure credentials")
         self._log("")
     
     def create_coming_soon_pages(self):
-        """Create coming soon HTML pages for dev and prod environments."""
-        self._log_progress("PROGRESS:Creating coming soon pages")
-        self._log("-> Creating coming soon pages...")
+        """Create coming soon HTML page for prod environment."""
+        self._log_progress("PROGRESS:Creating coming soon page")
+        self._log("-> Creating coming soon page...")
         
         # Create templates directory
         templates_dir = Path('templates')
@@ -684,31 +534,7 @@ jobs:
         
         project_name = self.config['user_identity']['project_name']
         
-        # Create coming-soon-dev.html
-        dev_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dev Environment - Coming Soon</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-    <div class="text-center px-4">
-        <h1 class="text-6xl font-bold text-white mb-4">🚧 Development Environment</h1>
-        <h2 class="text-4xl font-semibold text-white mb-8">{project_name}</h2>
-        <p class="text-xl text-white/90 max-w-md mx-auto">
-            Your app is being built... This is a temporary placeholder while deployment completes.
-        </p>
-    </div>
-</body>
-</html>
-"""
-        dev_file = templates_dir / 'coming-soon-dev.html'
-        dev_file.write_text(dev_html, encoding='utf-8')
-        self._log("[OK] Created coming-soon-dev.html")
-        
-        # Create coming-soon-prod.html
+        # Create coming-soon-prod.html (only prod)
         prod_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -732,11 +558,17 @@ jobs:
         prod_file.write_text(prod_html, encoding='utf-8')
         self._log("[OK] Created coming-soon-prod.html")
         
+        # Remove dev coming soon page if it exists
+        dev_file = templates_dir / 'coming-soon-dev.html'
+        if dev_file.exists():
+            dev_file.unlink()
+            self._log("[OK] Removed coming-soon-dev.html (dev not needed)")
+        
         # Stage template files
         self._run_command(['git', 'add', 'templates/'], check=False)
         
-        self._log("[OK] Coming soon pages created")
-        self._log_progress("DONE:Creating coming soon pages")
+        self._log("[OK] Coming soon page created")
+        self._log_progress("DONE:Creating coming soon page")
         self._log("")
     
     def setup_git_remote(self):
@@ -1006,26 +838,10 @@ jobs:
         self._log_progress("DONE:Pushing to GitHub")
     
     def create_dev_environment(self):
-        """Create dev branch for dev environment deployment."""
-        self._log_progress("PROGRESS:Creating dev environment")
-        self._log("")
-        self._log("-> Creating dev branch...")
-        
-        # Create dev branch
-        result = self._run_command(['git', 'checkout', '-b', 'dev'], check=False)
-        if result and result.returncode != 0:
-            self._run_command(['git', 'checkout', 'dev'], check=False)
-        
-        # Push dev branch
-        self._run_command(['git', 'push', '-u', 'origin', 'dev', '--force'], check=False)
-        
-        self._log("[OK] Dev branch created and pushed")
-        self._log("")
-        
-        # Switch back to main
-        self._run_command(['git', 'checkout', 'main'], check=False)
-        
-        self._log_progress("DONE:Creating dev environment")
+        """No dev environment - skip this step."""
+        self._log_progress("PROGRESS:Skipping dev environment")
+        self._log("-> Skipping dev environment (prod only)")
+        self._log_progress("DONE:Skipping dev environment")
     
     def verify_deployment(self):
         """Verify Azure deployment."""

@@ -70,16 +70,14 @@ class POCResponse(BaseModel):
     poc_structure: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
-# Root endpoint - serves coming soon page based on environment
+# Root endpoint - serves coming soon page
 @app.get("/")
 async def root():
-    """Serve coming soon page based on environment."""
+    """Serve coming soon page."""
     from fastapi.responses import HTMLResponse
     import os
     
-    environment = os.getenv("ENVIRONMENT", "development")
-    template_file = "coming-soon-prod.html" if environment == "production" else "coming-soon-dev.html"
-    template_path = os.path.join("templates", template_file)
+    template_path = os.path.join("templates", "coming-soon-prod.html")
     
     if os.path.exists(template_path):
         with open(template_path, 'r', encoding='utf-8') as f:
@@ -90,8 +88,7 @@ async def root():
         return {
             "message": "Boot_Lang Platform",
             "status": "running",
-            "version": "1.0.0",
-            "environment": environment
+            "version": "1.0.0"
         }
 
 # Config endpoint - serves user configuration for splash page
