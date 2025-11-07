@@ -226,70 +226,70 @@ class AutomationService:
     
     def authenticate_github(self):
         """Authenticate GitHub CLI."""
-        print("-> Authenticating GitHub CLI...")
-        print("  (Browser will open for authentication)")
-        print("")
+        self._log("-> Authenticating GitHub CLI...")
+        self._log("  (Browser will open for authentication)")
+        self._log("")
         
         gh_cmd = self._find_gh_command()
         if not gh_cmd:
-            print("[ERROR] GitHub CLI not found")
+            self._log("[ERROR] GitHub CLI not found")
             return False
         
         # Check if already authenticated
         result = self._run_command([gh_cmd, 'auth', 'status'], check=False, capture_output=True)
         if result and result.returncode == 0:
-            print("[OK] GitHub CLI already authenticated")
-            print("")
+            self._log("[OK] GitHub CLI already authenticated")
+            self._log("")
             return True
         
         # Authenticate - DO NOT suppress output, user needs to see prompts
         try:
             # Run interactively - let output flow to user
             result = subprocess.run([gh_cmd, 'auth', 'login', '--web', '--git-protocol', 'https'], check=True)
-            print("")
-            print("[OK] GitHub CLI authenticated")
-            print("")
+            self._log("")
+            self._log("[OK] GitHub CLI authenticated")
+            self._log("")
             return True
         except subprocess.CalledProcessError:
-            print("[ERROR] GitHub authentication failed")
-            print("Please try again or check your network connection")
+            self._log("[ERROR] GitHub authentication failed")
+            self._log("Please try again or check your network connection")
             return False
         except Exception as e:
-            print(f"[ERROR] GitHub authentication error: {str(e)}")
+            self._log(f"[ERROR] GitHub authentication error: {str(e)}")
             return False
     
     def authenticate_azure(self):
         """Authenticate Azure CLI."""
-        print("-> Authenticating Azure CLI...")
-        print("  (Browser will open for authentication)")
-        print("")
+        self._log("-> Authenticating Azure CLI...")
+        self._log("  (Browser will open for authentication)")
+        self._log("")
         
         az_cmd = self._find_az_command()
         if not az_cmd:
-            print("[ERROR] Azure CLI not found")
+            self._log("[ERROR] Azure CLI not found")
             return False
         
         # Check if already authenticated
         result = self._run_command([az_cmd, 'account', 'show'], check=False, capture_output=True)
         if result and result.returncode == 0:
-            print("[OK] Azure CLI already authenticated")
-            print("")
+            self._log("[OK] Azure CLI already authenticated")
+            self._log("")
             return True
         
         # Authenticate - DO NOT suppress output, user needs to see prompts
         try:
             # Run interactively - let output flow to user
             result = subprocess.run([az_cmd, 'login', '--use-device-code'], check=True)
-            print("")
-            print("[OK] Azure CLI authenticated")
-            print("")
+            self._log("")
+            self._log("[OK] Azure CLI authenticated")
+            self._log("")
             return True
         except subprocess.CalledProcessError:
-            print("[ERROR] Azure authentication failed")
-            print("Please try again or check your network connection")
+            self._log("[ERROR] Azure authentication failed")
+            self._log("Please try again or check your network connection")
             return False
         except Exception as e:
-            print(f"[ERROR] Azure authentication error: {str(e)}")
+            self._log(f"[ERROR] Azure authentication error: {str(e)}")
             return False
     
     def setup_azure_subscription(self):
