@@ -1,1 +1,43 @@
 Starting automation...
+[2025-11-07 13:04:20] ==================================================
+[2025-11-07 13:04:20]   [VERIFY] Checking CLI Tools
+[2025-11-07 13:04:20] ==================================================
+[2025-11-07 13:04:20] 
+[2025-11-07 13:04:20] [OK] GitHub CLI found
+GitHub CLI verified
+[2025-11-07 13:04:20] [OK] Azure CLI found
+Azure CLI verified
+[2025-11-07 13:04:20] 
+[2025-11-07 13:04:20] -> Authenticating GitHub CLI...
+[2025-11-07 13:04:20]   (Browser will open for authentication)
+[2025-11-07 13:04:20] 
+[2025-11-07 13:04:21] 
+[2025-11-07 13:04:21] ! First copy your one-time code: 5BAB-6051
+[2025-11-07 13:04:21] Open this URL to continue in your web browser: https://github.com/login/device
+[2025-11-07 13:06:23] ✓ Authentication complete.
+[2025-11-07 13:06:23] - gh config set -h github.com git_protocol https
+[2025-11-07 13:06:23] ✓ Configured git protocol
+[2025-11-07 13:06:24] ✓ Logged in as amyamyloyd
+[2025-11-07 13:06:24] 
+[2025-11-07 13:06:24] [OK] GitHub CLI authenticated
+[2025-11-07 13:06:24] 
+[2025-11-07 13:06:24] -> Authenticating Azure CLI...
+[2025-11-07 13:06:24]   (Browser will open for authentication)
+[2025-11-07 13:06:24] 
+[2025-11-07 13:06:24] [OK] Azure CLI already authenticated
+[2025-11-07 13:06:24] 
+PROGRESS:Creating virtual environment
+DONE:Creating virtual environment
+PROGRESS:Installing dependencies
+DONE:Installing dependencies
+PROGRESS:Initializing database
+DONE:Initializing database
+PROGRESS:Building welcome page
+DONE:Building welcome page
+PROGRESS:Configuring GitHub workflows
+DONE:Configuring GitHub workflows
+PROGRESS:Securing configuration file
+DONE:Securing configuration file
+PROGRESS:Setting API key secrets
+DONE:Setting API key secrets
+PROGRESS:Pushing to GitHub
