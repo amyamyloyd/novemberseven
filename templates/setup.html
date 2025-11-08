@@ -175,7 +175,6 @@
                         </button>
                     </div>
                 </div>
-
             </form>
 
             <!-- Messages -->
@@ -315,9 +314,14 @@
                 }
             });
             
-            const percentage = Math.round((completed / 4) * 100);
+            const requiredCompleted = requiredFields.filter(field => {
+                const input = document.getElementById(field);
+                return input && input.value && input.value.trim() !== '';
+            }).length;
+            
+            const percentage = Math.round((requiredCompleted / requiredFields.length) * 100);
             document.getElementById('progress-bar').style.width = percentage + '%';
-            document.getElementById('progress-text').textContent = `${completed}/4 complete`;
+            document.getElementById('progress-text').textContent = `${requiredCompleted}/${requiredFields.length} complete`;
             
             // Check if submit button should be enabled
             checkRequiredFields();

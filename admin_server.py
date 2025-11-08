@@ -420,12 +420,16 @@ class AdminHandler(BaseHTTPRequestHandler):
         <div class="card">
             <h2>🔗 Quick Links</h2>
             <div class="info-row">
-                <span class="label">Dashboard:</span>
-                <span class="value"><a href="http://localhost:9000" class="link" target="_blank">Open Dashboard</a></span>
+                <span class="label">PRD Builder:</span>
+                <span class="value"><a href="http://localhost:3000" class="link" target="prd_builder">Open PRD Builder</a></span>
             </div>
             <div class="info-row">
-                <span class="label">PRD Builder:</span>
-                <span class="value"><a href="http://localhost:9001" class="link" target="_blank">Open PRD Builder</a></span>
+                <span class="label">Backend API Docs:</span>
+                <span class="value"><a href="http://localhost:8000/docs" class="link" target="api_docs">FastAPI Docs</a></span>
+            </div>
+            <div class="info-row">
+                <span class="label">GitHub Repo:</span>
+                <span class="value"><a href="https://github.com" class="link" target="github">View on GitHub</a></span>
             </div>
         </div>
     </div>
@@ -441,16 +445,15 @@ class AdminHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    PORT = 9002
     print("=" * 60)
     print("[ADMIN] Boot Lang Admin Dashboard")
     print("=" * 60)
-    print(f"\nAdmin Panel running at http://localhost:{PORT}")
+    print("\nAccess at: http://localhost:9002")
     print("\nPress Ctrl+C to stop")
     print("=" * 60)
     print()
     
-    server = HTTPServer(('127.0.0.1', PORT), AdminHandler)
+    server = HTTPServer(('127.0.0.1', 9002), AdminHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

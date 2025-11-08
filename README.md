@@ -1,131 +1,53 @@
-# SaltAIr Boot_Lang
+# Boot_Lang Local Development Guide
 
-Local development helper tools for rapid application development.
+## Port Structure
 
-## Prerequisites
+- **9000**: React PRD Builder UI (Dashboard, PRDs, chat, etc.)
+- **9002**: Admin Panel (project status, git, database, no Azure)
+- **8000**: FastAPI backend/API
 
-1. **Cursor IDE**: https://cursor.sh
-2. **Cursor Extensions**: Python, Git
+## Getting Started (Mac/Linux)
 
-## Quick Start
+1. Create the virtual environment and install deps:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+2. Start FastAPI backend:
+   ```bash
+   python3 app.py
+   # or
+   uvicorn app:app --reload --port 8000
+   ```
+3. Start React frontend on port 9000:
+   ```bash
+   cd frontend
+   PORT=9000 npm start
+   ```
+4. Start the admin panel:
+   ```bash
+   python3 admin_server.py
+   # Now open http://localhost:9002
+   ```
 
-### 1. Clone Repository
-```bash
-git clone <your-repo-url>
-cd saltair-bootlang
-```
+## Quick Start (Windows)
 
-### 2. Open in Cursor
-```bash
-cursor .
-```
+Follow the welcome.bat script as before. See the docs for full automation.
 
-### 3. Run Setup
+## What Changed
 
-**Windows:**
-```bash
-welcome.bat
-```
+- **Azure**: Provisioning, CLI, config, and deployment REMOVED (local-only)
+- **Setup**: Only requires project, OpenAI API key, GitHub URL. Simpler onboarding.
+- **Admin**: Local-only dashboard, shows git, db, and local status (no cloud/Azure)
+- **React App**: Fully local, no auth required in dev, runs on 9000
 
-**Mac/Linux:**
-```bash
-bash welcome.sh
-```
+## Typical Workflows
 
-Browser opens to http://localhost:8001/setup
-
-### 4. Fill Setup Form
-
-Provide:
-- Your name
-- Project name
-- GitHub repo URL (create empty repo first)
-- OpenAI API key (required)
-- Anthropic API key (optional)
-- LangSmith API key (optional)
-
-### 5. Wait for Setup
-
-Setup automatically:
-- ✅ Creates virtual environment
-- ✅ Connects to your GitHub repo
-- ✅ Creates .env with API keys
-- ✅ Installs dependencies
-- ✅ Initializes SQLite database
-- ✅ Commits and pushes
-- ✅ Starts helper tools
-
-### 6. Start Building!
-
-Browser opens to **http://localhost:9000**
-
-## Helper Tools
-
-**Three servers on high ports:**
-
-- 🏠 **Dashboard** - http://localhost:9000
-- 📝 **PRD Builder** - http://localhost:9001
-- ⚙️ **Admin Panel** - http://localhost:9002
-
-### Restart Helper Tools
-
-```bash
-python helper_server.py
-python prd_builder.py
-python admin_server.py
-```
-
-## Your App Development
-
-**Use any common ports:**
-
-- ✅ Port 3000 - Your frontend
-- ✅ Port 8000 - Your backend
-- ✅ Port 8001 - Your API/services
-
-Helper tools (9000+) won't interfere.
-
-## Project Structure
-
-```
-/
-├── helper_server.py      # Dashboard (port 9000)
-├── prd_builder.py        # PRD Builder (port 9001)
-├── admin_server.py       # Admin Panel (port 9002)
-├── automation_service.py # Setup automation
-├── setup_server.py       # Setup form server
-├── install_tools.py      # Tool checker/installer
-├── welcome.bat           # Windows launcher
-├── welcome.sh            # Mac/Linux launcher
-├── user_config.json      # Your configuration
-├── .env                  # API keys (auto-generated)
-├── boot_lang.db          # SQLite database
-└── venv/                 # Virtual environment
-```
-
-## What You Get
-
-✅ **Clean local environment**
-- Virtual environment
-- Git connected to your repo
-- API keys configured
-- Database initialized
-
-✅ **Helper tools**
-- PRD Builder for planning
-- Admin panel for monitoring
-- Dashboard for quick access
-
-✅ **Port strategy**
-- Helper tools: 9000-9002
-- Your app: 3000, 8000, 8001, etc.
-- No conflicts
-
-## Need Help?
-
-Cursor agent commands in welcome.md
+- **Build a PRD**: Open http://localhost:9000 and use the builder/chat/prd tabs
+- **Monitor Project Status**: Open http://localhost:9002 (admin panel)
+- **Backend API**: Docs available at http://localhost:8000/docs
 
 ---
 
-Built by SaltAIr
-
+- Azure scripts, fields, and cloud deployment have been fully REMOVED for local-only environments.

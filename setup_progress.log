@@ -1,24 +1,26 @@
 Starting automation...
-[2025-11-08 09:14:42] ==================================================
-[2025-11-08 09:14:42]   [VERIFY] Checking CLI Tools
-[2025-11-08 09:14:42] ==================================================
-[2025-11-08 09:14:42] 
-[2025-11-08 09:14:42] [OK] GitHub CLI found
+[2025-11-08 09:58:02] ==================================================
+[2025-11-08 09:58:02]   [VERIFY] Checking CLI Tools
+[2025-11-08 09:58:02] ==================================================
+[2025-11-08 09:58:02] 
+[2025-11-08 09:58:02] [OK] GitHub CLI found
 GitHub CLI verified
-[2025-11-08 09:14:42] [OK] Azure CLI found
-Azure CLI verified
-[2025-11-08 09:14:42] 
-[2025-11-08 09:14:42] -> Authenticating GitHub CLI...
-[2025-11-08 09:14:42]   (Browser will open for authentication)
-[2025-11-08 09:14:42] 
-[2025-11-08 09:14:44] [OK] GitHub CLI already authenticated
-[2025-11-08 09:14:44] 
+[2025-11-08 09:58:02] 
+[2025-11-08 09:58:02] -> Authenticating GitHub CLI...
+[2025-11-08 09:58:02]   (Browser will open for authentication)
+[2025-11-08 09:58:02] 
+[2025-11-08 09:58:03] [OK] GitHub CLI already authenticated
+[2025-11-08 09:58:03] 
 PROGRESS:Creating virtual environment
 DONE:Creating virtual environment
 PROGRESS:Installing dependencies
 DONE:Installing dependencies
 PROGRESS:Initializing database
 DONE:Initializing database
+PROGRESS:Building welcome page
+DONE:Building welcome page
 PROGRESS:Securing configuration file
 DONE:Securing configuration file
+PROGRESS:Setting API key secrets
+DONE:Setting API key secrets
 PROGRESS:Pushing to GitHub

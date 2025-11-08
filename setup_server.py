@@ -137,6 +137,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                     },
                     "preferences": {
                         "use_prd_tool": True,
+                        "auto_deploy": False,
                         "openai_model_preference": "gpt-4",
                         "timezone": "UTC"
                     }
@@ -173,6 +174,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                     },
                     "preferences": {
                         "use_prd_tool": data.get("use_prd_tool", True),
+                        "auto_deploy": data.get("auto_deploy", False),
                         "openai_model_preference": data.get("openai_model_preference", "gpt-4"),
                         "timezone": data.get("timezone", "UTC")
                     }
@@ -271,7 +273,12 @@ class SetupHandler(BaseHTTPRequestHandler):
                     }).encode())
                     return
                 
+                # Auto-generate Azure resource names from project name
                 project_name = data.get("project_name")
+                
+                # Sanitize project name for Azure (lowercase, hyphens only, no spaces)
+                sanitized_name = re.sub(r'[^a-z0-9-]', '', project_name.lower().replace(' ', '-'))
+                sanitized_name = re.sub(r'-+', '-', sanitized_name).strip('-')
                 
                 # Save complete config
                 config_dict = {
@@ -292,6 +299,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                     },
                     "preferences": {
                         "use_prd_tool": data.get("use_prd_tool", True),
+                        "auto_deploy": data.get("auto_deploy", False),
                         "openai_model_preference": data.get("openai_model_preference", "gpt-4"),
                         "timezone": data.get("timezone", "UTC")
                     }

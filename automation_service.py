@@ -69,28 +69,6 @@ class AutomationService:
             raise
     
     def _find_gh_command(self):
-        """Find GitHub CLI command path."""
-        # Try PATH first
-        gh_path = shutil.which('gh')
-        if gh_path:
-            return gh_path
-        
-        # Check common install locations
-        common_paths = [
-            'C:\\Program Files\\GitHub CLI\\gh.exe',
-            'C:\\Program Files (x86)\\GitHub CLI\\gh.exe',
-            os.path.expanduser('~/bin/gh'),
-            '/usr/local/bin/gh',
-            '/opt/homebrew/bin/gh'
-        ]
-        
-        for path in common_paths:
-            if os.path.exists(path):
-                return path
-        
-        return None
-    
-    def _find_gh_command(self):
         """Find GitHub CLI executable, refreshing PATH if needed."""
         # Try PATH first
         gh_path = shutil.which('gh')
@@ -131,47 +109,6 @@ class AutomationService:
         
         return None
     
-    def _find_az_command(self):
-        """Find Azure CLI executable, refreshing PATH if needed."""
-        # Try PATH first
-        az_path = shutil.which('az')
-        if az_path:
-            return az_path
-        
-        # On Windows, refresh PATH from registry
-        if self.is_windows:
-            try:
-                import winreg
-                import time
-                
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
-                                    r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
-                path_value, _ = winreg.QueryValueEx(key, 'Path')
-                winreg.CloseKey(key)
-                os.environ['PATH'] = path_value
-                time.sleep(1)  # Brief wait for PATH update
-                
-                # Try again after refresh
-                az_path = shutil.which('az')
-                if az_path:
-                    return az_path
-            except:
-                pass
-        
-        # Check common installation paths
-        common_paths = [
-            r'C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin\az.cmd',
-            r'C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\az.cmd',
-            '/usr/local/bin/az',
-            '/opt/homebrew/bin/az'
-        ]
-        
-        for path in common_paths:
-            if os.path.exists(path):
-                return path
-        
-        return None
-    
     def install_cli_tools(self):
         """Verify CLI tools are installed (install_tools.py handles installation)."""
         self._log("==================================================")
@@ -189,17 +126,6 @@ class AutomationService:
         
         self._log("[OK] GitHub CLI found")
         self._log_progress("GitHub CLI verified")
-        
-        # Verify Azure CLI
-        az_cmd = self._find_az_command()
-        if not az_cmd:
-            self._log("[ERROR] Azure CLI (az) not found")
-            self._log("[ERROR] This should have been installed by welcome script")
-            self._log_progress("ERROR:Azure CLI not found")
-            return False
-        
-        self._log("[OK] Azure CLI found")
-        self._log_progress("Azure CLI verified")
         
         self._log("")
         return True
@@ -252,6 +178,62 @@ class AutomationService:
         except Exception as e:
             self._log(f"[ERROR] GitHub authentication error: {str(e)}")
             return False
+    
+    def start_helper_services(self):
+        """Start all helper tools on high ports."""
+        self._log_progress("PROGRESS:Starting helper services")
+        print("")
+        print("=" * 60)
+        print("  [START] Launching Helper Tools")
+        print("=" * 60)
+        print("")
+        
+        # Start React app (port 9000) - the PRD builder UI
+        print("-> Starting React app (PRD Builder) on port 9000...")
+        try:
+            if self.is_windows:
+                subprocess.Popen([
+                    'start', 'cmd', '/k',
+                    f'cd /d {os.getcwd()}\\frontend && set PORT=9000 && npm start'
+                ], shell=True)
+            else:
+                os.chdir('frontend')
+                env = os.environ.copy()
+                env['PORT'] = '9000'
+                subprocess.Popen(['npm', 'start'], env=env)
+                os.chdir('..')
+            time.sleep(1)
+        except Exception as e:
+            print(f"[ERROR] Failed to start React app: {e}")
+            print("[INFO] Continuing with other services...")
+        
+        # Start admin panel (port 9002)
+        print("-> Starting Admin Panel on port 9002...")
+        try:
+            if self.is_windows:
+                subprocess.Popen([
+                    'start', 'cmd', '/k',
+                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python admin_server.py'
+                ], shell=True)
+            else:
+                subprocess.Popen(['./venv/bin/python', 'admin_server.py'])
+            time.sleep(2)
+        except Exception as e:
+            print(f"[ERROR] Failed to start Admin Panel: {e}")
+            print("[INFO] Continuing with other services...")
+        
+        # Open browser to React app
+        try:
+            webbrowser.open('http://localhost:9000')
+        except:
+            pass
+        
+        print("[OK] Helper tools running:")
+        print("  React App (PRD Builder): http://localhost:9000")
+        print("  Admin Panel:              http://localhost:9002")
+        print("")
+        
+        self._log_progress("DONE:Starting helper services")
     
     def create_coming_soon_pages(self):
         """Create coming soon HTML page for prod environment."""
@@ -483,148 +465,66 @@ class AutomationService:
         print("[OK] Pushed to GitHub")
         self._log_progress("DONE:Pushing to GitHub")
     
-    def cleanup(self):
-        """Clean up after automation."""
-        print("")
-        # Kill setup server (will be done by the server itself)
-        time.sleep(2)
-    
-    def start_helper_services(self):
-        """Start all helper tools on high ports."""
-        self._log_progress("PROGRESS:Starting helper services")
-        print("")
-        print("=" * 60)
-        print("  [START] Launching Helper Tools")
-        print("=" * 60)
-        print("")
-        
-        # Start dashboard (port 9000)
-        print("-> Starting dashboard on port 9000...")
-        try:
-            if self.is_windows:
-                subprocess.Popen([
-                    'start', 'cmd', '/k',
-                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python helper_server.py'
-                ], shell=True)
-            else:
-                subprocess.Popen(['./venv/bin/python', 'helper_server.py'])
-        except Exception as e:
-            print(f"[ERROR] Failed to start dashboard: {e}")
-            print("[INFO] Continuing with other services...")
-        
-        time.sleep(1)
-        
-        # Start PRD builder (port 9001)
-        print("-> Starting PRD Builder on port 9001...")
-        try:
-            if self.is_windows:
-                subprocess.Popen([
-                    'start', 'cmd', '/k',
-                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python prd_builder.py'
-                ], shell=True)
-            else:
-                subprocess.Popen(['./venv/bin/python', 'prd_builder.py'])
-        except Exception as e:
-            print(f"[ERROR] Failed to start PRD Builder: {e}")
-            print("[INFO] Continuing with other services...")
-        
-        time.sleep(1)
-        
-        # Start admin panel (port 9002)
-        print("-> Starting Admin Panel on port 9002...")
-        try:
-            if self.is_windows:
-                subprocess.Popen([
-                    'start', 'cmd', '/k',
-                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python admin_server.py'
-                ], shell=True)
-            else:
-                subprocess.Popen(['./venv/bin/python', 'admin_server.py'])
-        except Exception as e:
-            print(f"[ERROR] Failed to start Admin Panel: {e}")
-            print("[INFO] Continuing with other services...")
-        
-        time.sleep(2)
-        
-        # Open browser to dashboard
-        try:
-            webbrowser.open('http://localhost:9000')
-        except Exception as e:
-            print(f"[WARN] Could not open browser: {e}")
-        
-        print("[OK] Helper tools running:")
-        print("  Dashboard:   http://localhost:9000")
-        print("  PRD Builder: http://localhost:9001")
-        print("  Admin Panel: http://localhost:9002")
-        print("")
-        
-        self._log_progress("DONE:Starting helper services")
-    
     def run_automation(self) -> bool:
-        """Run full automation sequence."""
+        """Run full automation sequence (local/dev, no Azure)."""
         try:
             # Initialize progress log
             with open(self.progress_log, 'w', encoding='utf-8') as f:
                 f.write("Starting automation...\n")
-            
             print("")
-            print("==================================================")
-            print("  Starting Automated Setup")
-            print("==================================================")
+            print("=" * 50)
+            print("  Starting Automated Setup (Local Only)")
+            print("=" * 50)
             print("")
-            
+
             # Step 0: Install CLI tools
             if not self.install_cli_tools():
                 print("[ERROR] CLI tool installation failed")
                 return False
-            
+
             # Step 1: Authenticate GitHub
             if not self.authenticate_github():
                 return False
-            
+
             # Step 2: Setup git remote
-            current_branch = self._run_command(['git', 'branch', '--show-current'], capture_output=True)
-            if current_branch and current_branch.stdout.strip() != 'main':
-                print(f"Switching from {current_branch.stdout.strip()} to main branch...")
-                self._run_command(['git', 'checkout', 'main'])
-            
             self.setup_git_remote()
-            
+
             # Step 3: Create virtual environment
             self.create_virtual_environment()
-            
+
             # Step 4: Install dependencies
             self.install_dependencies()
-            
+
             # Step 5: Initialize database
             self.initialize_database()
-            
-            # Step 6: Secure config
+
+            # Step 6: Build welcome page
+            self.build_welcome_page()
+
+            # Step 7: Secure config
             self.secure_config_file()
-            
-            # Step 7: Commit and push
+
+            # Step 8: Set API key secrets
+            self.set_api_key_secrets()
+
+            # Step 9: Commit and push
             self.commit_and_push()
-            
-            # Step 8: Start helper services
+
+            # Step 10: Start helper services (dashboard, admin panel)
             self.start_helper_services()
-            
+
             print("")
-            print("=" * 60)
-            print("  [OK] Setup Complete!")
-            print("=" * 60)
+            print("=" * 50)
+            print("  [OK] Local Setup Complete!")
+            print("=" * 50)
             print("")
-            print("Your development environment is ready!")
+            print("Your Boot Lang environment is ready!")
             print("")
-            print("📍 Helper Tools:")
-            print("   Dashboard:   http://localhost:9000")
-            print("   PRD Builder: http://localhost:9001")
-            print("   Admin Panel: http://localhost:9002")
+            print("📍 Access Points:")
+            print("   Backend API: http://localhost:8000")
+            print("   Frontend:    http://localhost:9000")
             print("")
-            print("💡 Your app can use ports 3000, 8000, 8001, etc.")
-            print("")
-            
             return True
-            
         except Exception as e:
             print(f"[ERROR] Automation failed: {str(e)}")
             import traceback

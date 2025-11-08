@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../config';
 
 interface Document {
   id: number;
@@ -63,7 +64,7 @@ const PRDBuilder: React.FC = () => {
 
   const loadDocuments = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/poc/documents', {
+      const response = await axios.get(`${API_URL}/api/poc/documents`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDocuments(response.data);
@@ -74,7 +75,7 @@ const PRDBuilder: React.FC = () => {
 
   const loadPRDs = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/poc/list-prds');
+      const response = await axios.get(`${API_URL}/api/poc/list-prds`);
       setPrds(response.data);
     } catch (error) {
       console.error('Failed to load PRDs:', error);
@@ -98,7 +99,7 @@ const PRDBuilder: React.FC = () => {
     formData.append('file', file);
 
     try {
-      await axios.post('http://localhost:8000/api/poc/upload', formData, {
+      await axios.post(`${API_URL}/api/poc/upload`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -117,7 +118,7 @@ const PRDBuilder: React.FC = () => {
     if (!window.confirm('Delete this document?')) return;
 
     try {
-      await axios.delete(`http://localhost:8000/api/poc/documents/${docId}`, {
+      await axios.delete(`${API_URL}/api/poc/documents/${docId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadDocuments();
@@ -148,7 +149,7 @@ const PRDBuilder: React.FC = () => {
       try {
         // Generate PRD
         const prdResponse = await axios.post(
-          'http://localhost:8000/api/poc/generate-prd',
+          `${API_URL}/api/poc/generate-prd`,
           {
             requirements: {} // Agent will extract from conversation
           },
@@ -181,7 +182,7 @@ const PRDBuilder: React.FC = () => {
     // Normal chat flow
     try {
       const response = await axios.post(
-        'http://localhost:8000/api/poc/chat',
+        `${API_URL}/api/poc/chat`,
         {
           prompt: userInput,
           conversation_history: conversationId ? { conversation_id: conversationId } : null
@@ -317,7 +318,7 @@ const PRDBuilder: React.FC = () => {
                       setSelectedPrd(prd);
                       // Load PRD content
                       try {
-                        const response = await axios.get(`http://localhost:8000/api/poc/prd/${prd.prd_name}`);
+                        const response = await axios.get(`${API_URL}/api/poc/prd/${prd.prd_name}`);
                         setPrdContent(response.data.content);
                       } catch (error) {
                         console.error('Failed to load PRD content:', error);
