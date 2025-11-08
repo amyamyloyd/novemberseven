@@ -139,7 +139,7 @@ async def get_system_status():
     """
     Get system status for admin dashboard.
     
-    Returns git status, Azure URLs, database info, project info.
+    Returns git status, database info, and project info.
     """
     import json
     import subprocess
@@ -148,7 +148,6 @@ async def get_system_status():
     status = {
         "project": {},
         "git": {},
-        "azure": {},
         "database": {},
         "timestamp": datetime.now().isoformat()
     }
@@ -214,33 +213,6 @@ async def get_system_status():
             "status": "⚠️ Git info unavailable"
         }
     
-    # Azure info
-    try:
-        with open('user_config.json', 'r') as f:
-            config = json.load(f)
-        
-        azure = config.get('azure_settings', {})
-        app_service = azure.get('app_service_name', '')
-        static_url = azure.get('static_web_app_url', 'Not deployed yet')
-        dev_url = azure.get('dev_slot_url', 'Not created yet')
-        resource_group = azure.get('resource_group', 'N/A')
-        
-        prod_url = f"https://{app_service}.azurewebsites.net" if app_service else "Not configured"
-        
-        status["azure"] = {
-            "resource_group": resource_group,
-            "backend_prod": prod_url,
-            "backend_dev": dev_url,
-            "frontend": static_url
-        }
-    except:
-        status["azure"] = {
-            "resource_group": "N/A",
-            "backend_prod": "Not configured",
-            "backend_dev": "Not configured",
-            "frontend": "Not configured"
-        }
-    
     # Database info
     db_path = 'boot_lang.db'
     
@@ -292,6 +264,65 @@ async def get_system_status():
             }
     
     return status
+
+
+# Table records endpoint for admin dashboard
+@app.get("/api/system/table/{table_name}/records")
+async def get_table_records(table_name: str):
+    """
+    Get all records from a specific database table.
+    
+    Args:
+        table_name: Name of the table to query
+        
+    Returns:
+        JSON with columns and rows data
+    """
+    import sqlite3
+    
+    db_path = 'boot_lang.db'
+    
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="Database not found")
+    
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row  # Enable column access by name
+        cursor = conn.cursor()
+        
+        # Verify table exists
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,)
+        )
+        if not cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=404, detail=f"Table '{table_name}' not found")
+        
+        # Get all records
+        cursor.execute(f"SELECT * FROM {table_name}")
+        rows = cursor.fetchall()
+        
+        # Get column names
+        columns = [description[0] for description in cursor.description]
+        
+        # Convert rows to list of dicts
+        records = [dict(row) for row in rows]
+        
+        conn.close()
+        
+        return {
+            "table_name": table_name,
+            "columns": columns,
+            "records": records,
+            "count": len(records)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching table records: {str(e)}")
+
 
 # Login endpoint
 @app.post("/api/login", response_model=LoginResponse)

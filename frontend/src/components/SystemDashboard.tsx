@@ -20,12 +20,6 @@ interface SystemStatus {
     has_uncommitted_changes: boolean;
     status: string;
   };
-  azure: {
-    resource_group: string;
-    backend_prod: string;
-    backend_dev: string;
-    frontend: string;
-  };
   database: {
     exists: boolean;
     tables: Array<{ name: string; records: number | string }>;
@@ -35,10 +29,20 @@ interface SystemStatus {
   timestamp: string;
 }
 
+interface TableRecords {
+  table_name: string;
+  columns: string[];
+  records: Array<Record<string, any>>;
+  count: number;
+}
+
 const SystemDashboard: React.FC = () => {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [tableRecords, setTableRecords] = useState<TableRecords | null>(null);
+  const [loadingRecords, setLoadingRecords] = useState(false);
 
   const loadStatus = async () => {
     setLoading(true);
@@ -51,6 +55,22 @@ const SystemDashboard: React.FC = () => {
       setError(err.response?.data?.detail || 'Failed to load system status');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTableRecords = async (tableName: string) => {
+    setLoadingRecords(true);
+    setSelectedTable(tableName);
+    setTableRecords(null);
+    
+    try {
+      const response = await axios.get(`${API_URL}/api/system/table/${tableName}/records`);
+      setTableRecords(response.data);
+    } catch (err: any) {
+      console.error('Error loading table records:', err);
+      setTableRecords(null);
+    } finally {
+      setLoadingRecords(false);
     }
   };
 
@@ -98,8 +118,8 @@ const SystemDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Top Grid: Project Info and Git Status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           
           {/* Project Info Card */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -140,12 +160,14 @@ const SystemDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Database Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-4">🗄️ Database</h2>
-            {status.database.exists ? (
-              <div className="space-y-3">
+        {/* Database Card (Full Width) */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">🗄️ PRD Build Database</h2>
+          {status.database.exists ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="flex justify-between items-center pb-2 border-b">
                   <span className="text-sm font-semibold text-gray-600">Total Tables:</span>
                   <span className="text-sm text-gray-800">{status.database.tables.length}</span>
@@ -154,55 +176,98 @@ const SystemDashboard: React.FC = () => {
                   <span className="text-sm font-semibold text-gray-600">Total Records:</span>
                   <span className="text-sm text-gray-800">{status.database.total_records}</span>
                 </div>
-                <div className="mt-3 space-y-2">
+              </div>
+              
+              {/* Table List */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Tables (click to view records)</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {status.database.tables.map((table) => (
-                    <div key={table.name} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                    <button
+                      key={table.name}
+                      onClick={() => loadTableRecords(table.name)}
+                      className={`flex justify-between items-center p-3 rounded-lg transition border ${
+                        selectedTable === table.name
+                          ? 'bg-indigo-50 border-indigo-500'
+                          : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
                       <span className="text-sm font-medium">{table.name}</span>
                       <span className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-full">
                         {table.records}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="text-center text-gray-500 italic py-4">
-                Database not initialized yet
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Azure Deployments Card (Full Width) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">☁️ Azure Deployments</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-sm font-semibold text-gray-600">Resource Group:</span>
-              <span className="text-sm text-gray-800">{status.azure.resource_group}</span>
+              {/* Table Records Display */}
+              {loadingRecords && (
+                <div className="text-center py-8 text-gray-500">
+                  Loading table records...
+                </div>
+              )}
+
+              {!loadingRecords && tableRecords && (
+                <div className="mt-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      {tableRecords.table_name} - {tableRecords.count} records
+                    </h3>
+                    <button
+                      onClick={() => setSelectedTable(null)}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+                  
+                  {tableRecords.count === 0 ? (
+                    <div className="text-center py-8 text-gray-500 italic">
+                      No records in this table
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            {tableRecords.columns.map((column) => (
+                              <th
+                                key={column}
+                                className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                              >
+                                {column}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {tableRecords.records.map((record, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50">
+                              {tableRecords.columns.map((column) => (
+                                <td
+                                  key={column}
+                                  className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap"
+                                >
+                                  {record[column] !== null && record[column] !== undefined
+                                    ? String(record[column])
+                                    : '-'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center text-gray-500 italic py-4">
+              Database not initialized yet
             </div>
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-sm font-semibold text-gray-600">Backend (Production):</span>
-              <a href={status.azure.backend_prod} target="_blank" rel="noopener noreferrer" 
-                 className="text-sm text-indigo-600 hover:text-indigo-700">
-                {status.azure.backend_prod}
-              </a>
-            </div>
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-sm font-semibold text-gray-600">Backend (Development):</span>
-              <a href={status.azure.backend_dev} target="_blank" rel="noopener noreferrer"
-                 className="text-sm text-indigo-600 hover:text-indigo-700">
-                {status.azure.backend_dev}
-              </a>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-gray-600">Frontend (Static Web App):</span>
-              <a href={status.azure.frontend} target="_blank" rel="noopener noreferrer"
-                 className="text-sm text-indigo-600 hover:text-indigo-700">
-                {status.azure.frontend}
-              </a>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Quick Links Card */}
