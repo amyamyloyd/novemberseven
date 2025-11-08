@@ -13,17 +13,8 @@ const getApiUrl = (): string => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
-  // 2. Auto-detect based on hostname
-  const hostname = window.location.hostname;
-  
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // Local development
-    return 'http://localhost:8000';
-  }
-  
-  // Production: Azure deployment
-  return 'https://boot-lang-gscvbveeg3dvgefh.eastus2-01.azurewebsites.net';
+  // 2. Always use backend helper API on 9100 for dev
+  return 'http://localhost:9100';
 };
 
 export const API_URL = getApiUrl();

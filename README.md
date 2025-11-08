@@ -4,7 +4,7 @@
 
 - **9000**: React PRD Builder UI (Dashboard, PRDs, chat, etc.)
 - **9002**: Admin Panel (project status, git, database, no Azure)
-- **8000**: FastAPI backend/API
+- **9000**: FastAPI backend/API
 
 ## Getting Started (Mac/Linux)
 
@@ -18,7 +18,7 @@
    ```bash
    python3 app.py
    # or
-   uvicorn app:app --reload --port 8000
+   uvicorn app:app --reload --port 9000
    ```
 3. Start React frontend on port 9000:
    ```bash
@@ -46,7 +46,7 @@ Follow the welcome.bat script as before. See the docs for full automation.
 
 - **Build a PRD**: Open http://localhost:9000 and use the builder/chat/prd tabs
 - **Monitor Project Status**: Open http://localhost:9002 (admin panel)
-- **Backend API**: Docs available at http://localhost:8000/docs
+- **Backend API**: Docs available at http://localhost:9000/docs
 
 ---
 

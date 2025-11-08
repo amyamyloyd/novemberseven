@@ -33,8 +33,11 @@ async def startup_event():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
+        "http://localhost:3000",   # User's app
+        "http://localhost:9000",   # Helper dashboard
+        "http://localhost:9001",   # PRD Builder UI
+        "http://localhost:9002",   # Admin UI
+        "http://localhost:5173",   # Vite
         "https://proud-smoke-02a8bab0f.1.azurestaticapps.net",  # Azure Static Web App
         "https://boot-lang-gscvbveeg3dvgefh.eastus2-01.azurewebsites.net",  # Azure App Service
     ],
@@ -340,4 +343,4 @@ async def list_pocs(user_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=9000, reload=True)
