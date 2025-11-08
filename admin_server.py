@@ -1,9 +1,8 @@
 """
 Local Admin Dashboard Server
 
-Runs on localhost:8080 and provides a web interface for:
+Runs on localhost:9002 and provides a web interface for:
 - Viewing git status
-- Viewing Azure deployment URLs
 - Viewing database tables and records
 - Quick links to resources
 """
@@ -47,7 +46,6 @@ class AdminHandler(BaseHTTPRequestHandler):
         status = {
             "project": self.get_project_info(),
             "git": self.get_git_status(),
-            "azure": self.get_azure_info(),
             "database": self.get_database_info(),
             "timestamp": datetime.now().isoformat()
         }
@@ -115,34 +113,6 @@ class AdminHandler(BaseHTTPRequestHandler):
                 "commit_message": "N/A",
                 "has_uncommitted_changes": False,
                 "status": "⚠️ Git info unavailable"
-            }
-    
-    def get_azure_info(self):
-        """Get Azure deployment URLs from config."""
-        try:
-            with open('user_config.json', 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            
-            azure = config.get('azure_settings', {})
-            app_service = azure.get('app_service_name', '')
-            static_url = azure.get('static_web_app_url', 'Not deployed yet')
-            dev_url = azure.get('dev_slot_url', 'Not created yet')
-            resource_group = azure.get('resource_group', 'N/A')
-            
-            prod_url = f"https://{app_service}.azurewebsites.net" if app_service else "Not configured"
-            
-            return {
-                "resource_group": resource_group,
-                "backend_prod": prod_url,
-                "backend_dev": dev_url,
-                "frontend": static_url
-            }
-        except:
-            return {
-                "resource_group": "N/A",
-                "backend_prod": "Not configured",
-                "backend_dev": "Not configured",
-                "frontend": "Not configured"
             }
     
     def get_database_info(self):
@@ -446,41 +416,16 @@ class AdminHandler(BaseHTTPRequestHandler):
             </div>
         </div>
         
-        <!-- Azure Deployments Card (Full Width) -->
-        <div class="card">
-            <h2>☁️ Azure Deployments</h2>
-            <div class="info-row">
-                <span class="label">Resource Group:</span>
-                <span class="value">{status['azure']['resource_group']}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">Backend (Production):</span>
-                <span class="value"><a href="{status['azure']['backend_prod']}" class="link" target="_blank">{status['azure']['backend_prod']}</a></span>
-            </div>
-            <div class="info-row">
-                <span class="label">Backend (Development):</span>
-                <span class="value"><a href="{status['azure']['backend_dev']}" class="link" target="_blank">{status['azure']['backend_dev']}</a></span>
-            </div>
-            <div class="info-row">
-                <span class="label">Frontend (Static Web App):</span>
-                <span class="value"><a href="{status['azure']['frontend']}" class="link" target="_blank">{status['azure']['frontend']}</a></span>
-            </div>
-        </div>
-        
         <!-- Quick Links Card -->
         <div class="card">
             <h2>🔗 Quick Links</h2>
             <div class="info-row">
+                <span class="label">Dashboard:</span>
+                <span class="value"><a href="http://localhost:9000" class="link" target="_blank">Open Dashboard</a></span>
+            </div>
+            <div class="info-row">
                 <span class="label">PRD Builder:</span>
-                <span class="value"><a href="http://localhost:3000" class="link" target="prd_builder">Open PRD Builder</a></span>
-            </div>
-            <div class="info-row">
-                <span class="label">Backend API Docs:</span>
-                <span class="value"><a href="http://localhost:8000/docs" class="link" target="api_docs">FastAPI Docs</a></span>
-            </div>
-            <div class="info-row">
-                <span class="label">GitHub Repo:</span>
-                <span class="value"><a href="https://github.com" class="link" target="github">View on GitHub</a></span>
+                <span class="value"><a href="http://localhost:9001" class="link" target="_blank">Open PRD Builder</a></span>
             </div>
         </div>
     </div>
@@ -496,15 +441,16 @@ class AdminHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    PORT = 9002
     print("=" * 60)
     print("[ADMIN] Boot Lang Admin Dashboard")
     print("=" * 60)
-    print("\nAccess at: http://localhost:8080")
+    print(f"\nAdmin Panel running at http://localhost:{PORT}")
     print("\nPress Ctrl+C to stop")
     print("=" * 60)
     print()
     
-    server = HTTPServer(('127.0.0.1', 8080), AdminHandler)
+    server = HTTPServer(('127.0.0.1', PORT), AdminHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

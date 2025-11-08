@@ -1,66 +1,24 @@
 Starting automation...
-[2025-11-07 17:03:14] ==================================================
-[2025-11-07 17:03:14]   [VERIFY] Checking CLI Tools
-[2025-11-07 17:03:14] ==================================================
-[2025-11-07 17:03:14] 
-[2025-11-07 17:03:14] [OK] GitHub CLI found
+[2025-11-08 09:14:42] ==================================================
+[2025-11-08 09:14:42]   [VERIFY] Checking CLI Tools
+[2025-11-08 09:14:42] ==================================================
+[2025-11-08 09:14:42] 
+[2025-11-08 09:14:42] [OK] GitHub CLI found
 GitHub CLI verified
-[2025-11-07 17:03:14] [OK] Azure CLI found
+[2025-11-08 09:14:42] [OK] Azure CLI found
 Azure CLI verified
-[2025-11-07 17:03:14] 
-[2025-11-07 17:03:14] -> Authenticating GitHub CLI...
-[2025-11-07 17:03:14]   (Browser will open for authentication)
-[2025-11-07 17:03:14] 
-[2025-11-07 17:03:15] [OK] GitHub CLI already authenticated
-[2025-11-07 17:03:15] 
-[2025-11-07 17:03:15] -> Authenticating Azure CLI...
-[2025-11-07 17:03:15]   (Browser will open for authentication)
-[2025-11-07 17:03:15] 
-[2025-11-07 17:03:16] [OK] Azure CLI already authenticated
-[2025-11-07 17:03:16] 
-PROGRESS:Provisioning Azure resources
-[2025-11-07 17:03:16] -> Provisioning Azure resources...
-[2025-11-07 17:03:16] -> Checking if resource group exists...
-[2025-11-07 17:03:18] -> Creating resource group 'sevennov-rg'...
-[2025-11-07 17:03:19] [OK] Resource group created
-[2025-11-07 17:03:19] -> Creating App Service plan 'sevennov-backend-plan'...
-[2025-11-07 17:03:27] [OK] App Service plan created (Basic B1 - free tier eligible)
-[2025-11-07 17:03:27] -> Creating Prod Web App 'sevennov-backend'...
-[2025-11-07 17:03:52] [OK] Prod Web App created
-[2025-11-07 17:03:52] -> Creating Static Web App 'sevennov-backend-frontend'...
-[2025-11-07 17:03:56] [OK] Static Web App created
-[2025-11-07 17:03:58] -> Configuring prod app environment variables...
-[2025-11-07 17:04:00] [OK] Prod app environment configured
-[2025-11-07 17:04:00] [OK] All Azure resources provisioned
-DONE:Provisioning Azure resources
-[2025-11-07 17:04:00] 
-PROGRESS:Creating GitHub workflow
-[2025-11-07 17:04:00] -> Creating GitHub workflow...
-[2025-11-07 17:04:00] [OK] Created deploy-prod.yml
-[2025-11-07 17:04:00] [OK] GitHub workflow created
-DONE:Creating GitHub workflows
-[2025-11-07 17:04:00] 
-PROGRESS:Setting Azure credentials
-[2025-11-07 17:04:00] -> Setting Azure credentials for GitHub Actions...
-[2025-11-07 17:04:00] [OK] Using Azure service principal authentication (AZURE_CREDENTIALS)
-DONE:Setting Azure credentials
-[2025-11-07 17:04:00] 
-PROGRESS:Creating coming soon page
-[2025-11-07 17:04:00] -> Creating coming soon page...
-[2025-11-07 17:04:00] [OK] Created coming-soon-prod.html
-[2025-11-07 17:04:00] [OK] Coming soon page created
-DONE:Creating coming soon page
-[2025-11-07 17:04:00] 
+[2025-11-08 09:14:42] 
+[2025-11-08 09:14:42] -> Authenticating GitHub CLI...
+[2025-11-08 09:14:42]   (Browser will open for authentication)
+[2025-11-08 09:14:42] 
+[2025-11-08 09:14:44] [OK] GitHub CLI already authenticated
+[2025-11-08 09:14:44] 
 PROGRESS:Creating virtual environment
 DONE:Creating virtual environment
 PROGRESS:Installing dependencies
 DONE:Installing dependencies
 PROGRESS:Initializing database
 DONE:Initializing database
-PROGRESS:Building welcome page
-DONE:Building welcome page
 PROGRESS:Securing configuration file
 DONE:Securing configuration file
-PROGRESS:Setting API key secrets
-DONE:Setting API key secrets
 PROGRESS:Pushing to GitHub

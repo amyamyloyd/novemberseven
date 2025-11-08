@@ -10,6 +10,7 @@ import subprocess
 import time
 import platform
 import shutil
+import webbrowser
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -81,27 +82,6 @@ class AutomationService:
             os.path.expanduser('~/bin/gh'),
             '/usr/local/bin/gh',
             '/opt/homebrew/bin/gh'
-        ]
-        
-        for path in common_paths:
-            if os.path.exists(path):
-                return path
-        
-        return None
-    
-    def _find_az_command(self):
-        """Find Azure CLI command path."""
-        # Try PATH first
-        az_path = shutil.which('az')
-        if az_path:
-            return az_path
-        
-        # Check common install locations
-        common_paths = [
-            'C:\\Program Files\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az.cmd',
-            'C:\\Program Files (x86)\\Microsoft SDKs\\Azure\\CLI2\\wbin\\az.cmd',
-            '/usr/local/bin/az',
-            '/opt/homebrew/bin/az'
         ]
         
         for path in common_paths:
@@ -273,253 +253,6 @@ class AutomationService:
             self._log(f"[ERROR] GitHub authentication error: {str(e)}")
             return False
     
-    def authenticate_azure(self):
-        """Authenticate Azure CLI."""
-        self._log("-> Authenticating Azure CLI...")
-        self._log("  (Browser will open for authentication)")
-        self._log("")
-        
-        az_cmd = self._find_az_command()
-        if not az_cmd:
-            self._log("[ERROR] Azure CLI not found")
-            return False
-        
-        # Check if already authenticated
-        result = self._run_command([az_cmd, 'account', 'show'], check=False, capture_output=True)
-        if result and result.returncode == 0:
-            self._log("[OK] Azure CLI already authenticated")
-            self._log("")
-            return True
-        
-        # Authenticate with device code - capture output to show in browser
-        try:
-            # Run and capture output to display in browser
-            process = subprocess.Popen(
-                [az_cmd, 'login', '--use-device-code'],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-            
-            # Stream output to browser in real-time
-            for line in process.stdout:
-                clean_line = line.rstrip()
-                self._log(clean_line)
-            
-            process.wait()
-            
-            if process.returncode == 0:
-                self._log("")
-                self._log("[OK] Azure CLI authenticated")
-                self._log("")
-                return True
-            else:
-                self._log("[ERROR] Azure authentication failed")
-                return False
-                
-        except Exception as e:
-            self._log(f"[ERROR] Azure authentication error: {str(e)}")
-            return False
-    
-    def setup_azure_subscription(self):
-        """Set Azure subscription from config."""
-        subscription_id = self.config.get('azure_settings', {}).get('subscription_id')
-        
-        az_cmd = self._find_az_command()
-        if not az_cmd:
-            print("[WARN] Azure CLI not found - skipping subscription setup")
-            return
-        
-        if subscription_id:
-            print(f"-> Setting Azure subscription...")
-            result = self._run_command([az_cmd, 'account', 'set', '--subscription', subscription_id], check=False)
-            
-            if result and result.returncode == 0:
-                print(f"[OK] Azure subscription set: {subscription_id}")
-            else:
-                print(f"[WARN] Failed to set subscription {subscription_id}")
-                print("Using default subscription instead")
-        else:
-            print("[WARN] No Azure subscription ID in config - using default")
-        
-        print("")
-    
-    def provision_azure_resources(self):
-        """Provision all Azure resources: resource group, app service plan, web app, slots, static web app."""
-        self._log_progress("PROGRESS:Provisioning Azure resources")
-        self._log("-> Provisioning Azure resources...")
-        
-        az_cmd = self._find_az_command()
-        if not az_cmd:
-            self._log("[ERROR] Azure CLI not found")
-            self._log_progress("ERROR:Azure CLI not found")
-            raise RuntimeError("Azure CLI not found")
-        
-        # Get config values
-        resource_group = self.config['azure_settings']['resource_group']
-        app_service_name = self.config['azure_settings']['app_service_name']
-        region = self.config['azure_settings']['region']
-        project_name = self.config['user_identity']['project_name']
-        openai_key = self.config['api_keys']['openai_api_key']
-        
-        # Check if resource group exists - fail if it does
-        self._log("-> Checking if resource group exists...")
-        result = self._run_command([
-            az_cmd, 'group', 'exists', '--name', resource_group
-        ], check=False, capture_output=True)
-        
-        if result and result.stdout.strip().lower() == 'true':
-            self._log(f"[ERROR] Resource group '{resource_group}' already exists")
-            self._log("[ERROR] Please delete existing resources or use different names")
-            self._log_progress("ERROR:Resource group already exists")
-            raise RuntimeError(f"Resource group '{resource_group}' already exists")
-        
-        # Create resource group
-        self._log(f"-> Creating resource group '{resource_group}'...")
-        self._run_command([
-            az_cmd, 'group', 'create',
-            '--name', resource_group,
-            '--location', region,
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Resource group created")
-        
-        # Create App Service plan (Linux, B1 SKU - free tier eligible)
-        plan_name = f"{app_service_name}-plan"
-        self._log(f"-> Creating App Service plan '{plan_name}'...")
-        self._run_command([
-            az_cmd, 'appservice', 'plan', 'create',
-            '--name', plan_name,
-            '--resource-group', resource_group,
-            '--sku', 'B1',
-            '--is-linux',
-            '--output', 'none'
-        ])
-        self._log(f"[OK] App Service plan created (Basic B1 - free tier eligible)")
-        
-        # Create Web App for prod environment (only prod, no dev)
-        self._log(f"-> Creating Prod Web App '{app_service_name}'...")
-        self._run_command([
-            az_cmd, 'webapp', 'create',
-            '--name', app_service_name,
-            '--resource-group', resource_group,
-            '--plan', plan_name,
-            '--runtime', 'PYTHON:3.11',
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Prod Web App created")
-        
-        # Create Static Web App (empty resource, no GitHub linking)
-        static_web_app_name = f"{app_service_name}-frontend"
-        self._log(f"-> Creating Static Web App '{static_web_app_name}'...")
-        self._run_command([
-            az_cmd, 'staticwebapp', 'create',
-            '--name', static_web_app_name,
-            '--resource-group', resource_group,
-            '--location', region,
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Static Web App created")
-        
-        # Get Static Web App URL
-        result = self._run_command([
-            az_cmd, 'staticwebapp', 'show',
-            '--name', static_web_app_name,
-            '--resource-group', resource_group,
-            '--query', 'defaultHostname',
-            '--output', 'tsv'
-        ], capture_output=True)
-        static_web_app_url = f"https://{result.stdout.strip()}" if result and result.stdout.strip() else ""
-        
-        # Configure environment variables for prod app
-        self._log("-> Configuring prod app environment variables...")
-        self._run_command([
-            az_cmd, 'webapp', 'config', 'appsettings', 'set',
-            '--name', app_service_name,
-            '--resource-group', resource_group,
-            '--settings',
-            'ENVIRONMENT=production',
-            f'PROJECT_NAME={project_name}',
-            f'OPENAI_API_KEY={openai_key}',
-            '--output', 'none'
-        ])
-        self._log(f"[OK] Prod app environment configured")
-        
-        # Save URLs to config
-        backend_prod_url = f"https://{app_service_name}.azurewebsites.net"
-        
-        self.config['azure_settings']['backend_prod_url'] = backend_prod_url
-        self.config['azure_settings']['static_web_app_url'] = static_web_app_url
-        self._save_config()
-        
-        self._log("[OK] All Azure resources provisioned")
-        self._log_progress("DONE:Provisioning Azure resources")
-        self._log("")
-    
-    def create_github_workflows(self):
-        """Set up Azure native GitHub deployment (no GitHub Actions needed)."""
-        self._log_progress("PROGRESS:Setting up Azure deployment")
-        self._log("-> Setting up Azure native GitHub deployment...")
-        
-        az_cmd = self._find_az_command()
-        gh_cmd = self._find_gh_command()
-        
-        if not az_cmd or not gh_cmd:
-            self._log("[WARN] Azure CLI or GitHub CLI not found - skipping deployment setup")
-            self._log("[WARN] You'll need to set up deployment manually in Azure Portal")
-            self._log_progress("DONE:Setting up Azure deployment")
-            return
-        
-        app_service_name = self.config['azure_settings']['app_service_name']
-        resource_group = self.config['azure_settings']['resource_group']
-        github_repo = self.config['git_deployment']['github_repo_url']
-        
-        # Get GitHub token
-        try:
-            result = self._run_command([gh_cmd, 'auth', 'token'], capture_output=True, check=False)
-            if result and result.returncode == 0:
-                github_token = result.stdout.strip()
-            else:
-                self._log("[WARN] Could not get GitHub token - skipping deployment setup")
-                self._log_progress("DONE:Setting up Azure deployment")
-                return
-        except:
-            self._log("[WARN] Could not get GitHub token - skipping deployment setup")
-            self._log_progress("DONE:Setting up Azure deployment")
-            return
-        
-        # Configure Azure to deploy from GitHub
-        self._log("-> Configuring Azure to deploy from GitHub...")
-        try:
-            self._run_command([
-                az_cmd, 'webapp', 'deployment', 'source', 'config',
-                '--name', app_service_name,
-                '--resource-group', resource_group,
-                '--repo-url', github_repo,
-                '--branch', 'main',
-                '--manual-integration',
-                '--git-token', github_token
-            ], check=False)
-            self._log("[OK] Azure deployment configured")
-        except Exception as e:
-            self._log(f"[WARN] Failed to configure deployment: {e}")
-            self._log("[WARN] You can set this up manually in Azure Portal > Deployment Center")
-        
-        self._log_progress("DONE:Setting up Azure deployment")
-        self._log("")
-    
-    def set_azure_publish_profiles(self):
-        """Get Azure publish profile for prod app and set as GitHub secret (using Azure credentials instead)."""
-        self._log_progress("PROGRESS:Setting Azure credentials")
-        self._log("-> Setting Azure credentials for GitHub Actions...")
-        
-        # We're using Azure service principal (AZURE_CREDENTIALS) instead of publish profiles
-        # This was already set up, so we just confirm
-        self._log("[OK] Using Azure service principal authentication (AZURE_CREDENTIALS)")
-        self._log_progress("DONE:Setting Azure credentials")
-        self._log("")
-    
     def create_coming_soon_pages(self):
         """Create coming soon HTML page for prod environment."""
         self._log_progress("PROGRESS:Creating coming soon page")
@@ -673,28 +406,6 @@ class AutomationService:
         print("[OK] Welcome page built")
         self._log_progress("DONE:Building welcome page")
     
-    def configure_github_workflows(self):
-        """Configure GitHub workflows."""
-        self._log_progress("PROGRESS:Configuring GitHub workflows")
-        print("-> Configuring GitHub workflows...")
-        
-        app_service_name = self.config['azure_settings']['app_service_name']
-        deploy_yml_path = '.github/workflows/deploy.yml'
-        
-        if os.path.exists(deploy_yml_path):
-            with open(deploy_yml_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # Update app-name
-            import re
-            content = re.sub(r"app-name:.*", f"app-name: '{app_service_name}'", content)
-            
-            with open(deploy_yml_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-        
-        print("[OK] GitHub workflows configured")
-        self._log_progress("DONE:Configuring GitHub workflows")
-    
     def secure_config_file(self):
         """Add user_config.json to .gitignore."""
         self._log_progress("PROGRESS:Securing configuration file")
@@ -711,39 +422,6 @@ class AutomationService:
                 f.write("\nuser_config.json\n")
         
         self._log_progress("DONE:Securing configuration file")
-    
-    def get_azure_publish_profile(self) -> str:
-        """Get Azure App Service publish profile XML."""
-        try:
-            az_cmd = self._find_az_command()
-            if not az_cmd:
-                print("[WARN] Azure CLI not found")
-                return None
-            
-            app_name = self.config['azure_settings']['app_service_name']
-            resource_group = self.config['azure_settings'].get('resource_group')
-            
-            if not resource_group:
-                print("[WARN] Resource group not configured")
-                return None
-            
-            # Get publish profile from Azure
-            result = self._run_command([
-                az_cmd, 'webapp', 'deployment', 'list-publishing-profiles',
-                '--name', app_name,
-                '--resource-group', resource_group,
-                '--xml'
-            ], capture_output=True, check=False)
-            
-            if result and result.returncode == 0:
-                return result.stdout.strip()
-            else:
-                print("[WARN] Could not retrieve Azure publish profile")
-                return None
-                
-        except Exception as e:
-            print(f"[WARN] Error getting publish profile: {e}")
-            return None
     
     def set_api_key_secrets(self):
         """Set API key GitHub repository secrets."""
@@ -784,42 +462,6 @@ class AutomationService:
         print("[OK] API key secrets set")
         self._log_progress("DONE:Setting API key secrets")
     
-    def set_azure_secrets(self):
-        """Set Azure deployment secrets in GitHub."""
-        self._log_progress("PROGRESS:Setting Azure deployment secrets")
-        print("-> Setting Azure deployment secrets...")
-        
-        gh_cmd = self._find_gh_command()
-        if not gh_cmd:
-            print("[ERROR] GitHub CLI not found")
-            return
-        
-        # Get publish profile from Azure
-        publish_profile = self.get_azure_publish_profile()
-        
-        if not publish_profile:
-            print("[WARN] Skipping Azure secrets - publish profile not available")
-            print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually in GitHub")
-            self._log_progress("DONE:Setting Azure deployment secrets")
-            return
-        
-        # Set publish profile as GitHub secret
-        try:
-            proc = subprocess.Popen(
-                [gh_cmd, 'secret', 'set', 'AZURE_WEBAPP_PUBLISH_PROFILE'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            proc.communicate(input=publish_profile.encode())
-            
-            print("[OK] Azure deployment secrets set")
-            self._log_progress("DONE:Setting Azure deployment secrets")
-        except Exception as e:
-            print(f"[WARN] Failed to set Azure secrets: {e}")
-            print("  You'll need to set AZURE_WEBAPP_PUBLISH_PROFILE manually")
-            self._log_progress("DONE:Setting Azure deployment secrets")
-    
     def commit_and_push(self):
         """Commit and push to GitHub."""
         self._log_progress("PROGRESS:Pushing to GitHub")
@@ -841,59 +483,82 @@ class AutomationService:
         print("[OK] Pushed to GitHub")
         self._log_progress("DONE:Pushing to GitHub")
     
-    def create_dev_environment(self):
-        """No dev environment - skip this step."""
-        self._log_progress("PROGRESS:Skipping dev environment")
-        self._log("-> Skipping dev environment (prod only)")
-        self._log_progress("DONE:Skipping dev environment")
-    
-    def verify_deployment(self):
-        """Verify Azure deployment."""
-        self._log_progress("PROGRESS:Verifying deployment")
-        print("-> Waiting for GitHub Actions to start deployment...")
-        time.sleep(15)
-        self._log_progress("DONE:Deploying to Azure via GitHub Actions")
-        
-        azure_url = self.config['azure_settings'].get('static_web_app_url')
-        if not azure_url:
-            print("[WARN] No Azure URL configured - skipping verification")
-            self._log_progress("DONE:Verifying deployment")
-            return
-        
-        print(f"-> Testing deployment at: {azure_url}")
-        
-        # Try for up to 3 minutes
-        deployment_verified = False
-        for i in range(1, 37):
-            try:
-                import urllib.request
-                req = urllib.request.Request(azure_url)
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    if response.status == 200:
-                        print(f"[OK] Deployment verified! Site responding (HTTP {response.status})")
-                        deployment_verified = True
-                        self._log_progress("DONE:Verifying deployment")
-                        self._log_progress(f"COMPLETE:{azure_url}")
-                        break
-            except:
-                pass
-            
-            print(f"[WAIT] Waiting for deployment... (attempt {i}/36)")
-            time.sleep(5)
-        
-        if not deployment_verified:
-            print("[WARN] Deployment verification timed out after 3 minutes")
-            print(f"  URL: {azure_url}")
-            print("  This may mean GitHub Actions is still building")
-            print("  Your site may still deploy successfully - check the URL in a few minutes")
-            self._log_progress("DONE:Verifying deployment")
-            self._log_progress(f"ERROR:Deployment not verified - check GitHub Actions")
-    
     def cleanup(self):
         """Clean up after automation."""
         print("")
         # Kill setup server (will be done by the server itself)
         time.sleep(2)
+    
+    def start_helper_services(self):
+        """Start all helper tools on high ports."""
+        self._log_progress("PROGRESS:Starting helper services")
+        print("")
+        print("=" * 60)
+        print("  [START] Launching Helper Tools")
+        print("=" * 60)
+        print("")
+        
+        # Start dashboard (port 9000)
+        print("-> Starting dashboard on port 9000...")
+        try:
+            if self.is_windows:
+                subprocess.Popen([
+                    'start', 'cmd', '/k',
+                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python helper_server.py'
+                ], shell=True)
+            else:
+                subprocess.Popen(['./venv/bin/python', 'helper_server.py'])
+        except Exception as e:
+            print(f"[ERROR] Failed to start dashboard: {e}")
+            print("[INFO] Continuing with other services...")
+        
+        time.sleep(1)
+        
+        # Start PRD builder (port 9001)
+        print("-> Starting PRD Builder on port 9001...")
+        try:
+            if self.is_windows:
+                subprocess.Popen([
+                    'start', 'cmd', '/k',
+                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python prd_builder.py'
+                ], shell=True)
+            else:
+                subprocess.Popen(['./venv/bin/python', 'prd_builder.py'])
+        except Exception as e:
+            print(f"[ERROR] Failed to start PRD Builder: {e}")
+            print("[INFO] Continuing with other services...")
+        
+        time.sleep(1)
+        
+        # Start admin panel (port 9002)
+        print("-> Starting Admin Panel on port 9002...")
+        try:
+            if self.is_windows:
+                subprocess.Popen([
+                    'start', 'cmd', '/k',
+                    f'cd /d {os.getcwd()} && venv\\Scripts\\activate && python admin_server.py'
+                ], shell=True)
+            else:
+                subprocess.Popen(['./venv/bin/python', 'admin_server.py'])
+        except Exception as e:
+            print(f"[ERROR] Failed to start Admin Panel: {e}")
+            print("[INFO] Continuing with other services...")
+        
+        time.sleep(2)
+        
+        # Open browser to dashboard
+        try:
+            webbrowser.open('http://localhost:9000')
+        except Exception as e:
+            print(f"[WARN] Could not open browser: {e}")
+        
+        print("[OK] Helper tools running:")
+        print("  Dashboard:   http://localhost:9000")
+        print("  PRD Builder: http://localhost:9001")
+        print("  Admin Panel: http://localhost:9002")
+        print("")
+        
+        self._log_progress("DONE:Starting helper services")
     
     def run_automation(self) -> bool:
         """Run full automation sequence."""
@@ -913,34 +578,16 @@ class AutomationService:
                 print("[ERROR] CLI tool installation failed")
                 return False
             
-            # Step 0.1: Authenticate
+            # Step 1: Authenticate GitHub
             if not self.authenticate_github():
                 return False
             
-            if not self.authenticate_azure():
-                return False
-            
-            self.setup_azure_subscription()
-            
-            # Step 0.2: Provision Azure resources
-            self.provision_azure_resources()
-            
-            # Step 0.3: Create GitHub workflows
-            self.create_github_workflows()
-            
-            # Step 0.4: Set Azure publish profiles
-            self.set_azure_publish_profiles()
-            
-            # Step 0.5: Create coming soon pages
-            self.create_coming_soon_pages()
-            
-            # Step 1: Ensure on main branch
+            # Step 2: Setup git remote
             current_branch = self._run_command(['git', 'branch', '--show-current'], capture_output=True)
             if current_branch and current_branch.stdout.strip() != 'main':
                 print(f"Switching from {current_branch.stdout.strip()} to main branch...")
                 self._run_command(['git', 'checkout', 'main'])
             
-            # Step 2: Setup git remote
             self.setup_git_remote()
             
             # Step 3: Create virtual environment
@@ -952,50 +599,28 @@ class AutomationService:
             # Step 5: Initialize database
             self.initialize_database()
             
-            # Step 6: Build welcome page
-            self.build_welcome_page()
-            
-            # Step 7: Secure config
+            # Step 6: Secure config
             self.secure_config_file()
             
-            # Step 9: Set API key secrets
-            self.set_api_key_secrets()
-            
-            # Step 10: Commit and push
+            # Step 7: Commit and push
             self.commit_and_push()
             
-            # Step 11: Create dev environment
-            self.create_dev_environment()
+            # Step 8: Start helper services
+            self.start_helper_services()
             
-            # Step 12: Verify deployment
-            self.verify_deployment()
-            
-            # Step 13: Cleanup
-            self.cleanup()
-            
-            # Success message
             print("")
-            print("==================================================")
+            print("=" * 60)
             print("  [OK] Setup Complete!")
-            print("==================================================")
+            print("=" * 60)
             print("")
-            print("Your Boot Lang environment is ready!")
+            print("Your development environment is ready!")
             print("")
-            print("📍 Access Points:")
-            print("   Backend API: http://localhost:8000")
-            print("   Frontend:    http://localhost:3000")
-            
-            azure_url = self.config['azure_settings'].get('static_web_app_url')
-            if azure_url:
-                print(f"   Deployed:    {azure_url}")
-            
+            print("📍 Helper Tools:")
+            print("   Dashboard:   http://localhost:9000")
+            print("   PRD Builder: http://localhost:9001")
+            print("   Admin Panel: http://localhost:9002")
             print("")
-            print("💡 Next Steps:")
-            print("   • Start backend: tell Cursor 'Start backend'")
-            print("   • Start frontend: tell Cursor 'Start frontend'")
-            print("   • Login at http://localhost:3000")
-            print("   • View System Dashboard at http://localhost:3000/dashboard")
-            print("   • Build a PRD: tell Cursor 'Help me build a PRD'")
+            print("💡 Your app can use ports 3000, 8000, 8001, etc.")
             print("")
             
             return True

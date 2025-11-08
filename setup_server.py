@@ -131,20 +131,12 @@ class SetupHandler(BaseHTTPRequestHandler):
                         "anthropic_api_key": "",
                         "langsmith_api_key": ""
                     },
-                    "azure_settings": {
-                        "app_service_name": "",
-                        "static_web_app_url": "",
-                        "resource_group": "",
-                        "subscription_id": "",
-                        "region": "eastus2"
-                    },
                     "git_deployment": {
                         "github_repo_url": "",
                         "deployment_branch": "main"
                     },
                     "preferences": {
                         "use_prd_tool": True,
-                        "auto_deploy": False,
                         "openai_model_preference": "gpt-4",
                         "timezone": "UTC"
                     }
@@ -175,20 +167,12 @@ class SetupHandler(BaseHTTPRequestHandler):
                         "anthropic_api_key": data.get("anthropic_api_key", ""),
                         "langsmith_api_key": data.get("langsmith_api_key", "")
                     },
-                    "azure_settings": {
-                        "app_service_name": "",
-                        "static_web_app_url": "",
-                        "resource_group": "",
-                        "subscription_id": data.get("subscription_id", ""),
-                        "region": "eastus2"
-                    },
                     "git_deployment": {
                         "github_repo_url": data.get("github_repo_url", ""),
                         "deployment_branch": "main"
                     },
                     "preferences": {
                         "use_prd_tool": data.get("use_prd_tool", True),
-                        "auto_deploy": data.get("auto_deploy", False),
                         "openai_model_preference": data.get("openai_model_preference", "gpt-4"),
                         "timezone": data.get("timezone", "UTC")
                     }
@@ -273,7 +257,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                 print("Received data:", json.dumps(data, indent=2))
                 
                 # Validate required fields
-                required = ['user_name', 'project_name', 'openai_api_key', 'github_repo_url', 'subscription_id']
+                required = ['user_name', 'project_name', 'openai_api_key', 'github_repo_url']
                 missing = [f for f in required if not data.get(f) or not str(data.get(f)).strip()]
                 
                 print(f"Missing fields: {missing}")
@@ -287,12 +271,7 @@ class SetupHandler(BaseHTTPRequestHandler):
                     }).encode())
                     return
                 
-                # Auto-generate Azure resource names from project name
                 project_name = data.get("project_name")
-                
-                # Sanitize project name for Azure (lowercase, hyphens only, no spaces)
-                sanitized_name = re.sub(r'[^a-z0-9-]', '', project_name.lower().replace(' ', '-'))
-                sanitized_name = re.sub(r'-+', '-', sanitized_name).strip('-')
                 
                 # Save complete config
                 config_dict = {
@@ -307,20 +286,12 @@ class SetupHandler(BaseHTTPRequestHandler):
                         "anthropic_api_key": data.get("anthropic_api_key", ""),
                         "langsmith_api_key": data.get("langsmith_api_key", "")
                     },
-                    "azure_settings": {
-                        "app_service_name": f"{sanitized_name}-backend",
-                        "static_web_app_url": "",  # Will be set after deployment
-                        "resource_group": f"{sanitized_name}-rg",
-                        "subscription_id": data.get("subscription_id", ""),
-                        "region": "eastus2"  # Fixed default
-                    },
                     "git_deployment": {
                         "github_repo_url": data.get("github_repo_url"),
                         "deployment_branch": "main"
                     },
                     "preferences": {
                         "use_prd_tool": data.get("use_prd_tool", True),
-                        "auto_deploy": data.get("auto_deploy", False),
                         "openai_model_preference": data.get("openai_model_preference", "gpt-4"),
                         "timezone": data.get("timezone", "UTC")
                     }

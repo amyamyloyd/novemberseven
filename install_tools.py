@@ -21,8 +21,7 @@ class ToolInstaller:
         self.winget_cmd = winget_path  # Passed from welcome.bat
         self.required_tools = {
             'git': 'Git',
-            'gh': 'GitHub CLI',
-            'az': 'Azure CLI'
+            'gh': 'GitHub CLI'
         }
         
     def log(self, message):
@@ -122,8 +121,7 @@ class ToolInstaller:
             # Map commands to winget IDs
             winget_map = {
                 'git': ('Git', 'Git.Git'),
-                'gh': ('GitHub CLI', 'GitHub.cli'),
-                'az': ('Azure CLI', 'Microsoft.AzureCLI')
+                'gh': ('GitHub CLI', 'GitHub.cli')
             }
             
             for cmd, name in missing_tools:
@@ -151,8 +149,7 @@ class ToolInstaller:
             # Map commands to brew packages
             brew_map = {
                 'git': 'git',
-                'gh': 'gh',
-                'az': 'azure-cli'
+                'gh': 'gh'
             }
             
             # Check if brew is available (Mac)
@@ -180,8 +177,6 @@ class ToolInstaller:
                 for cmd, name in missing_tools:
                     if cmd == 'gh':
                         self.log(f"  - {name}: brew install gh (Mac) or see https://cli.github.com/")
-                    elif cmd == 'az':
-                        self.log(f"  - {name}: brew install azure-cli (Mac) or see https://docs.microsoft.com/cli/azure/")
                     elif cmd == 'git':
                         self.log(f"  - {name}: brew install git (Mac) or apt/dnf install git (Linux)")
                 self.log("")
