@@ -177,17 +177,21 @@ async def get_system_status():
             stderr=subprocess.DEVNULL
         ).strip()
         
-        commit_hash = subprocess.check_output(
-            ['git', 'rev-parse', '--short', 'HEAD'],
+        # Get last 3 commits
+        commits_output = subprocess.check_output(
+            ['git', 'log', '-3', '--pretty=%h|%s'],
             text=True,
             stderr=subprocess.DEVNULL
         ).strip()
         
-        commit_msg = subprocess.check_output(
-            ['git', 'log', '-1', '--pretty=%B'],
-            text=True,
-            stderr=subprocess.DEVNULL
-        ).strip()
+        commits = []
+        for line in commits_output.split('\n'):
+            if '|' in line:
+                hash_part, msg_part = line.split('|', 1)
+                commits.append({
+                    "hash": hash_part.strip(),
+                    "message": msg_part.strip()
+                })
         
         status_output = subprocess.check_output(
             ['git', 'status', '--porcelain'],
@@ -199,16 +203,14 @@ async def get_system_status():
         
         status["git"] = {
             "branch": branch,
-            "commit_hash": commit_hash,
-            "commit_message": commit_msg,
+            "recent_commits": commits,
             "has_uncommitted_changes": has_changes,
             "status": "⚠️ Uncommitted changes" if has_changes else "✅ Clean"
         }
     except:
         status["git"] = {
             "branch": "unknown",
-            "commit_hash": "N/A",
-            "commit_message": "N/A",
+            "recent_commits": [],
             "has_uncommitted_changes": False,
             "status": "⚠️ Git info unavailable"
         }
@@ -264,6 +266,36 @@ async def get_system_status():
             }
     
     return status
+
+
+# Settings config endpoint
+@app.get("/api/settings/config")
+async def get_settings_config():
+    """
+    Get user configuration for settings page.
+    
+    Returns configuration including API keys, git repo, and preferences.
+    """
+    import json
+    
+    config_path = "user_config.json"
+    
+    if not os.path.exists(config_path):
+        raise HTTPException(status_code=404, detail="Configuration file not found")
+    
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        
+        return {
+            "user_identity": config.get("user_identity", {}),
+            "api_keys": config.get("api_keys", {}),
+            "git_deployment": config.get("git_deployment", {}),
+            "preferences": config.get("preferences", {}),
+            "setup_complete": config.get("setup_complete", False)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading configuration: {str(e)}")
 
 
 # Table records endpoint for admin dashboard

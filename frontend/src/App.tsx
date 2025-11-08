@@ -47,10 +47,6 @@ const Navigation: React.FC = () => {
           <span className="text-lg">⚙️</span>
           <span className="ml-3">Settings</span>
         </Link>
-        <Link to="/admin" className="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition" title="Admin Panel">
-          <span className="text-lg">👤</span>
-          <span className="ml-3">Admin</span>
-        </Link>
       </nav>
     </div>
   );

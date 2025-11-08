@@ -15,8 +15,7 @@ interface SystemStatus {
   };
   git: {
     branch: string;
-    commit_hash: string;
-    commit_message: string;
+    recent_commits: Array<{ hash: string; message: string }>;
     has_uncommitted_changes: boolean;
     status: string;
   };
@@ -149,14 +148,32 @@ const SystemDashboard: React.FC = () => {
                 <span className="text-sm text-gray-800">{status.git.branch}</span>
               </div>
               <div className="flex justify-between items-center pb-2 border-b">
-                <span className="text-sm font-semibold text-gray-600">Latest Commit:</span>
-                <span className="text-sm text-gray-800" title={status.git.commit_message}>
-                  {status.git.commit_hash}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
                 <span className="text-sm font-semibold text-gray-600">Status:</span>
                 <span className="text-sm text-gray-800">{status.git.status}</span>
+              </div>
+              <div className="pt-2">
+                <span className="text-sm font-semibold text-gray-600 block mb-2">Recent Commits:</span>
+                <div className="space-y-2">
+                  {status.git.recent_commits.length > 0 ? (
+                    status.git.recent_commits.map((commit, idx) => (
+                      <div key={commit.hash} className="flex items-start gap-2 text-xs">
+                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-700 flex-shrink-0">
+                          {commit.hash}
+                        </span>
+                        <span className="text-gray-600 line-clamp-2 flex-1">
+                          {commit.message}
+                        </span>
+                        {idx === 0 && (
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold flex-shrink-0">
+                            CURRENT
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-gray-500 italic">No commits found</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
